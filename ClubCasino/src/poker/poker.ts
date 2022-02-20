@@ -183,7 +183,6 @@ export default class Poker {
         this.displayCards(1);
       } else if (this.rounds == 5) {
         // finish game
-        // console.log("nooo", this.compareHands());
         return (this.winners = this.compareHands());
       }
       this.resetBets();
@@ -237,6 +236,8 @@ export default class Poker {
       player.roundBet = 0;
     });
   };
+
+  sidePot = () => {};
 
   // canDrawAll = (): boolean => {
   //   for (let i = 0; i < this.players.length; i++) {

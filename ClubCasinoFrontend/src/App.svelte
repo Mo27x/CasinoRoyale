@@ -1,5 +1,6 @@
 <script lang="ts">
   import { io } from "socket.io-client";
+  import { Router, Link, Route } from "svelte-navigator";
   import Card from "./Card.svelte";
   const socket = io();
   let cards = [];

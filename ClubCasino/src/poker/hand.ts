@@ -43,16 +43,16 @@ export default class Hand {
     let suits = [0, 0, 0, 0];
     let i: number[][] = [[], [], [], []];
     cards.forEach((card) => {
-      if (card.suit == "clubs") {
+      if (card.suit == "clubsuit") {
         suits[0]++;
         i[0] = [...i[0], cards.indexOf(card)];
-      } else if (card.suit == "diamonds") {
+      } else if (card.suit == "diamondsuit") {
         suits[1] += 1;
         i[1] = [...i[1], cards.indexOf(card)];
-      } else if (card.suit == "hearts") {
+      } else if (card.suit == "heartsuit") {
         suits[2]++;
         i[2] = [...i[2], cards.indexOf(card)];
-      } else if (card.suit == "spades") {
+      } else if (card.suit == "spadesuit") {
         suits[3]++;
         i[3] = [...i[3], cards.indexOf(card)];
       }
@@ -84,16 +84,16 @@ export default class Hand {
     let nums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let maxNum = -1;
     cards.forEach((card) => {
-      if (card.suit == "clubs") {
+      if (card.suit == "clubsuit") {
         suits[0]++;
         suitsOccurrences[0] = [...suitsOccurrences[0], cards.indexOf(card)];
-      } else if (card.suit == "diamonds") {
+      } else if (card.suit == "diamondsuit") {
         suits[1] += 1;
         suitsOccurrences[1] = [...suitsOccurrences[1], cards.indexOf(card)];
-      } else if (card.suit == "hearts") {
+      } else if (card.suit == "heartsiut") {
         suits[2]++;
         suitsOccurrences[2] = [...suitsOccurrences[2], cards.indexOf(card)];
-      } else if (card.suit == "spades") {
+      } else if (card.suit == "spadesuit") {
         suits[3]++;
         suitsOccurrences[3] = [...suitsOccurrences[3], cards.indexOf(card)];
       }
@@ -208,19 +208,19 @@ export default class Hand {
     let suits = [0, 0, 0, 0];
     let maxNums: number[] = [-1, -1, -1, -1];
     cards.forEach((card) => {
-      if (card.suit == "clubs") {
+      if (card.suit == "clubsuit") {
         suits[0]++;
         if (card.num > maxNums[0]) maxNums[0] = card.num;
         if (card.num == 1) maxNums[0] = 14;
-      } else if (card.suit == "diamonds") {
+      } else if (card.suit == "diamondsuit") {
         suits[1] += 1;
         if (card.num > maxNums[1]) maxNums[1] = card.num;
         if (card.num == 1) maxNums[1] = 14;
-      } else if (card.suit == "hearts") {
+      } else if (card.suit == "heartsuit") {
         suits[2]++;
         if (card.num > maxNums[2]) maxNums[2] = card.num;
         if (card.num == 1) maxNums[2] = 14;
-      } else if (card.suit == "spades") {
+      } else if (card.suit == "spadesuit") {
         suits[3]++;
         if (card.num > maxNums[3]) maxNums[3] = card.num;
         if (card.num == 1) maxNums[3] = 14;
@@ -230,7 +230,6 @@ export default class Hand {
     if (max >= 5) {
       maxNum = maxNums[suits.indexOf(max)];
     }
-    ("");
     return maxNum;
   };
   straight = (cards: Card[]): number => {
