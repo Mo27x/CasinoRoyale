@@ -14,7 +14,7 @@ export default class Player {
   public constructor(
     public readonly username: string,
     public money: number,
-    public readonly image: number
+    // public readonly image: number
   ) {
     this.roundBet = 0;
     this.folded = false;

@@ -12,6 +12,8 @@ import path from "path";
 import { body, validationResult, CustomValidator } from "express-validator";
 import Poker from "./poker/poker";
 import Player from "./poker/player";
+import { rmSync } from "fs";
+import { emit } from "process";
 export interface PlayerAuthInfoRequest extends Request {
   playerUsername: number;
   // playerRole: string;
@@ -28,9 +30,7 @@ createConnection()
     const httpServer = createServer(app);
     const io = new Server(httpServer);
     app.use(bodyParser.json());
-    app.use(
-      express.static(path.join(__dirname, "../../ClubCasinoFrontend/public/"))
-    );
+    app.use(express.static(path.join(__dirname, "../../Frontend/public/")));
 
     app.use(
       express.urlencoded({
@@ -62,11 +62,9 @@ createConnection()
     });
 
     let playerRepository = connection.getRepository(User);
-    let players: Player[] = [
-      new Player("momo", 500, 1),
-      new Player("hehe", 500, 2),
-    ];
-    let game = new Poker(200, players);
+    let players: Player[] = [];
+    let game: Poker;
+    let counter = 0;
 
     // setup express app here
     // ...
@@ -104,9 +102,7 @@ createConnection()
 
     app.get("/", (req, res) => {
       res.sendFile("index.html", {
-        root: path.join(
-          path.join(__dirname, "../../ClubCasinoFrontend/public/")
-        ),
+        root: path.join(path.join(__dirname, "../../Frontend/public/")),
       });
     });
 
@@ -227,45 +223,63 @@ createConnection()
     io.on("connection", (socket) => {
       console.log("a user connected");
       socket.on("disconnect", () => {
+        counter--;
         console.log("a user disconnected");
+      });
+      socket.on("name", (name: string) => {
+        counter++;
+        let player = new Player(name, 500);
+        players = [...players, player];
+        io.to(socket.id).emit("player", players[players.indexOf(player)]);
+        io.to(socket.id).emit("id", players.indexOf(player));
+        if (counter == 3) {
+          game = new Poker(200, players);
+          io.emit("currentPlayer", game.currentPlayer);
+          io.emit("players", players);
+        }
       });
       socket.on("check", (id) => {
         game.check(game.players[id]);
         io.emit("cards", JSON.stringify(game.cards));
+        io.emit("players", players);
         if (game.rounds == 5) {
           io.emit("winners", JSON.stringify(game.winners));
         }
-        io.emit("currentPlayer", JSON.stringify(game.currentPlayer.username));
+        io.emit("currentPlayer", game.currentPlayer);
       });
 
       socket.on("call", (id: number) => {
         game.call(game.players[id]);
         io.emit("cards", JSON.stringify(game.cards));
+        io.emit("players", players);
         if (game.rounds == 5) {
           io.emit("winners", JSON.stringify(game.winners));
         }
-        io.emit("currentPlayer", JSON.stringify(game.currentPlayer.username));
+        io.emit("currentPlayer", game.currentPlayer);
       });
 
       socket.on("bet", (id: number) => {
         game.bet(game.players[id], 200);
         io.emit("cards", JSON.stringify(game.cards));
-        io.emit("currentPlayer", JSON.stringify(game.currentPlayer.username));
+        io.emit("players", players);
+        io.emit("currentPlayer", game.currentPlayer);
       });
 
       socket.on("raise", (id: number) => {
         game.raise(game.players[id], 200);
         io.emit("cards", JSON.stringify(game.cards));
-        io.emit("currentPlayer", JSON.stringify(game.currentPlayer.username));
+        io.emit("players", players);
+        io.emit("currentPlayer", game.currentPlayer);
       });
 
       socket.on("fold", (id) => {
         game.fold(game.players[id]);
         io.emit("cards", JSON.stringify(game.cards));
+        io.emit("players", players);
         if (game.rounds == 5) {
           io.emit("winners", JSON.stringify(game.winners));
         }
-        io.emit("currentPlayer", JSON.stringify(game.currentPlayer.username));
+        io.emit("currentPlayer", game.currentPlayer);
       });
       socket.on("playerCards", (id) => {
         io.to(socket.id).emit(

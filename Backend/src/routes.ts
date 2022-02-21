@@ -1,4 +1,4 @@
-import {UserController} from "./controller/PlayerController";
+import {UserController} from "./controller/UserController";
 
 export const Routes = [{
     method: "get",

@@ -2,12 +2,15 @@
   import { io } from "socket.io-client";
   import { Router, Link, Route } from "svelte-navigator";
   import Card from "./Card.svelte";
+  import Player from "./Player.svelte";
   const socket = io();
   let cards = [];
   let name: string = "";
   let id: number = -1;
   let playerCards = [];
-  let currentPlayer = "";
+  let currentPlayer = [];
+  let player = [];
+  let players = [];
 
   function send(play: string) {
     socket.emit(play, id);
@@ -55,6 +58,17 @@
   socket.on("currentPlayer", (player) => {
     currentPlayer = player;
   });
+  socket.on("players", (inPlayers) => {
+    console.log(inPlayers);
+    players = inPlayers;
+  });
+  socket.on("player", (inPlayer) => {
+    console.log(inPlayer);
+    player = inPlayer;
+  });
+  socket.on("id", (inId) => {
+    id = inId;
+  });
 </script>
 
 <div class="entire">
@@ -63,8 +77,6 @@
     <div class="main">
       <input bind:value={name} type="text" required />
       <button on:click={() => sendName()}>Send</button>
-      <input bind:value={currentPlayer} type="text" required />
-
       <div class="table">
         <div class="card-place">
           {#if cards != []}
@@ -79,15 +91,23 @@
           <svelte:component this={Card} {...card} />
         {/each}
       {/if}
-
+      {#if players != []}
+        {#each players as player}
+          <svelte:component this={Player} {...player} />
+        {/each}
+      {/if}
+      {#if player != []}
+        You: <svelte:component this={Player} {...player} />
+      {/if}
+      {#if currentPlayer != []}
+        CurrentPlayer: <svelte:component this={Player} {...currentPlayer} />
+      {/if}
       <button on:click={() => send("check")}>Check</button>
       <button on:click={() => send("bet")}>Bet</button>
       <button on:click={() => send("fold")}>Fold</button>
       <button on:click={() => send("raise")}>Raise</button>
       <button on:click={() => send("call")}>Call</button>
       <button on:click={() => send("playerCards")}>player Cards</button>
-
-      <input bind:value={id} type="number" />
     </div>
   </center>
 </div>

@@ -29,14 +29,17 @@ export default class Poker {
       this.bet(this.button, this.smallBlind);
       this.currentPlayer = players[1];
       this.bet(players[1], this.bigblind);
-      this.firstBetter = this.button;
+      this.firstBetter = players[1];
       this.nextPlayer(this.players[1]);
     }
-    if (this.players.length >= 3) {
+    if (this.players.length > 2) {
       this.button = this.players[0];
-      this.bet(players[1], this.smallBlind);
-      this.bet(players[2], bigblind);
-      this.firstBetter = this.nextPlayer(this.players[2]);
+      this.currentPlayer = this.players[1];
+      this.bet(this.players[1], this.smallBlind);
+      this.currentPlayer = this.players[2];
+      this.bet(this.players[2], bigblind);
+      this.firstBetter = this.players[2];
+      this.nextPlayer(this.players[2]);
     }
   }
 
