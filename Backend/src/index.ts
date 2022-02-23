@@ -9,6 +9,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import path from "path";
+import { createHash } from "crypto";
 import { body, validationResult, CustomValidator } from "express-validator";
 import Poker from "./poker/poker";
 import Player from "./poker/player";
@@ -106,12 +107,12 @@ createConnection()
       });
     });
 
-    app.get("/login", (req, res) => {
-      res.sendFile(path.join(__dirname, "../public", "login.html"));
-    });
-    app.get("/register", (req, res) => {
-      res.sendFile(path.join(__dirname, "../public", "index.html"));
-    });
+    // app.get("/login", (req, res) => {
+    //   res.sendFile(path.join(__dirname, "../public", "login.html"));
+    // });
+    // app.get("/register", (req, res) => {
+    //   res.sendFile(path.join(__dirname, "../public", "index.html"));
+    // });
 
     app.get("/logout", authorization, (req, res) => {
       return res
@@ -176,6 +177,7 @@ createConnection()
       body("password")
         .isLength({ min: 8 })
         .withMessage("Password length must be at least 8 characters")
+        .not()
         .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/, "i")
         .withMessage(
           "Password must contain a at least an uppercase letter , a lowercase letter, a number and a special character"
@@ -186,27 +188,31 @@ createConnection()
         }
         return true;
       }),
-      async (req, res) => {
+      (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
           res.status(400).json({ errors: errors.array() });
         } else {
           let player = new User();
+          req.body.password = createHash("sha256")
+            .update(req.body.password)
+            .digest("hex");
           if (typeof req.body != "undefined") {
             let uPlayer = playerRepository.findOne({
               username: req.body.username,
             });
+            console.log(uPlayer);
             let ePlayer = playerRepository.findOne({ email: req.body.email });
             if (
-              typeof uPlayer == "undefined" &&
-              typeof ePlayer == "undefined"
+              // uPlayer != [] &&
+              // ePlayer != []
+              true
             ) {
               player.username = req.body.username;
               player.email = req.body.email;
               player.password = req.body.password;
               player.money = 20000;
               player.friends = [];
-              console.log(player);
               playerRepository.save(player);
             } else {
               return res.send("Email or Username already exists");
@@ -232,7 +238,7 @@ createConnection()
         players = [...players, player];
         io.to(socket.id).emit("player", players[players.indexOf(player)]);
         io.to(socket.id).emit("id", players.indexOf(player));
-        if (counter == 3) {
+        if (counter > 1) {
           game = new Poker(200, players);
           io.emit("currentPlayer", game.currentPlayer);
           io.emit("players", players);

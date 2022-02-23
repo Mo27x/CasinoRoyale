@@ -4,7 +4,7 @@
   "port": 3306,
   "username": "root",
   "password": "Napier2.71",
-  "database": "clubCasino",
+  "database": "casinoRoyale",
   "synchronize": false,
   "logging": false,
   "entities": ["src/entity/**/*.ts"],

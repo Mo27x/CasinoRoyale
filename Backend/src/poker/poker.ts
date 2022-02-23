@@ -31,6 +31,7 @@ export default class Poker {
       this.bet(players[1], this.bigblind);
       this.firstBetter = players[1];
       this.nextPlayer(this.players[1]);
+      this.firstBetter = this.currentPlayer;
     }
     if (this.players.length > 2) {
       this.button = this.players[0];
@@ -38,8 +39,8 @@ export default class Poker {
       this.bet(this.players[1], this.smallBlind);
       this.currentPlayer = this.players[2];
       this.bet(this.players[2], bigblind);
-      this.firstBetter = this.players[2];
       this.nextPlayer(this.players[2]);
+      this.firstBetter = this.currentPlayer;
     }
   }
 
@@ -115,8 +116,10 @@ export default class Poker {
         player.money = 0;
         player.allIn = true;
       }
-      this.firstBetter = player;
-      this.betted = true;
+      if (this.rounds >= 0) {
+        this.firstBetter = player;
+        this.betted = true;
+      }
       this.nextPlayer(player);
       return true;
     }
@@ -174,21 +177,22 @@ export default class Poker {
 
   round = (player: Player): Player[] => {
     // gotta review later
-    // if (this.currentPlayer != player) {
-    if (this.currentPlayer == this.firstBetter) {
-      this.betted = false;
-      this.rounds++;
-      if (this.rounds == 1) {
-        this.giveCards();
-      } else if (this.rounds == 2) {
-        this.displayCards(3);
-      } else if (this.rounds > 2 && this.rounds <= 4) {
-        this.displayCards(1);
-      } else if (this.rounds == 5) {
-        // finish game
-        return (this.winners = this.compareHands());
+    if (this.currentPlayer != player) {
+      if (this.currentPlayer == this.firstBetter) {
+        this.betted = false;
+        this.rounds++;
+        if (this.rounds == 1) {
+          this.giveCards();
+        } else if (this.rounds == 2) {
+          this.displayCards(3);
+        } else if (this.rounds > 2 && this.rounds <= 4) {
+          this.displayCards(1);
+        } else if (this.rounds == 5) {
+          // finish game
+          return (this.winners = this.compareHands());
+        }
+        this.resetBets();
       }
-      this.resetBets();
     }
     // } else {
     // gotta decide what to do if there is only one player
