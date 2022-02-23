@@ -72,7 +72,6 @@
 
 <div class="entire">
   <center>
-    <h1>Mo's Poker</h1>
     <div class="main">
       <input bind:value={name} type="text" required />
       <button on:click={() => sendName()}>Send</button>

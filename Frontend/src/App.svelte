@@ -4,6 +4,12 @@
   import Home from "./Home.svelte";
   import Poker from "./Poker.svelte";
   const socket = io();
+  let username: string;
+
+  socket.on("username", (inUsername: string) => {
+    username = inUsername;
+    console.log(username);
+  });
 </script>
 
 <div class="entire">

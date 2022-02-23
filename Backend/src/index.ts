@@ -13,14 +13,15 @@ import { createHash } from "crypto";
 import { body, validationResult, CustomValidator } from "express-validator";
 import Poker from "./poker/poker";
 import Player from "./poker/player";
+import cookieParser from "cookie-parser";
 import { rmSync } from "fs";
 import { emit } from "process";
 export interface PlayerAuthInfoRequest extends Request {
-  playerUsername: number;
+  playerUsername: string;
   // playerRole: string;
 }
 interface JwtPayload {
-  username: number;
+  username: string;
   // role: string;
 }
 
@@ -32,7 +33,7 @@ createConnection()
     const io = new Server(httpServer);
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "../../Frontend/public/")));
-
+    app.use(cookieParser());
     app.use(
       express.urlencoded({
         extended: true,
@@ -66,6 +67,7 @@ createConnection()
     let players: Player[] = [];
     let game: Poker;
     let counter = 0;
+    let i = 2;
 
     // setup express app here
     // ...
@@ -76,8 +78,6 @@ createConnection()
       }
       try {
         const data = jwt.verify(token, "goshawty") as JwtPayload;
-        console.log(data);
-
         req.playerUsername = data.username;
       } catch {
         res.sendStatus(403);
@@ -96,23 +96,20 @@ createConnection()
     const isValidUsername: CustomValidator = (value) => {
       return playerRepository.findOne({ username: value }).then((user) => {
         if (user) {
-          return Promise.reject("E-mail already in use");
+          return Promise.reject("Username already in use");
         }
       });
     };
 
-    app.get("/", (req, res) => {
+    app.get("/", (req: PlayerAuthInfoRequest, res) => {
       res.sendFile("index.html", {
         root: path.join(path.join(__dirname, "../../Frontend/public/")),
       });
+      io.on("connection", (socket) => {
+        console.log("momo");
+        io.to(socket.id).emit(req.playerUsername);
+      });
     });
-
-    // app.get("/login", (req, res) => {
-    //   res.sendFile(path.join(__dirname, "../public", "login.html"));
-    // });
-    // app.get("/register", (req, res) => {
-    //   res.sendFile(path.join(__dirname, "../public", "index.html"));
-    // });
 
     app.get("/logout", authorization, (req, res) => {
       return res
@@ -127,9 +124,9 @@ createConnection()
 
     app.post(
       "/api/login",
-      body("email")
-        .isEmail()
-        .normalizeEmail()
+      body("email").isEmail().normalizeEmail(),
+      body("password")
+        .isLength({ min: 8 })
         .withMessage("must be at least 8 characters long")
         .matches(/\d/)
         .withMessage("must contain a number"),
@@ -140,20 +137,25 @@ createConnection()
         } else {
           if (typeof req.body != "undefined") {
             let player = await playerRepository.findOne({
-              username: req.body.username,
+              email: req.body.email,
             });
-            if (typeof player != "undefined") {
+            if (player) {
+              req.body.password = createHash("sha256")
+                .update(req.body.password)
+                .digest("hex");
               player = await playerRepository.findOne({
-                username: req.body.username,
+                email: req.body.email,
                 password: req.body.password,
               });
-              if (typeof player != "undefined") {
-                console.log(player);
+              if (player) {
                 const token = jwt.sign(
-                  { username: req.body.username },
+                  { username: player.username },
                   "goshawty",
                   { expiresIn: "24h" }
                 );
+                io.on("connection", (socket) => {
+                  io.to(socket.id).emit(player.username);
+                });
                 return res
                   .cookie("access_token", token, {
                     expires: new Date(Date.now() + 30 * 24 * 3600000),
@@ -188,7 +190,7 @@ createConnection()
         }
         return true;
       }),
-      (req, res) => {
+      async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
           res.status(400).json({ errors: errors.array() });
@@ -198,16 +200,13 @@ createConnection()
             .update(req.body.password)
             .digest("hex");
           if (typeof req.body != "undefined") {
-            let uPlayer = playerRepository.findOne({
+            let uPlayer = await playerRepository.findOne({
               username: req.body.username,
             });
-            console.log(uPlayer);
-            let ePlayer = playerRepository.findOne({ email: req.body.email });
-            if (
-              // uPlayer != [] &&
-              // ePlayer != []
-              true
-            ) {
+            let ePlayer = await playerRepository.findOne({
+              email: req.body.email,
+            });
+            if (!uPlayer && !ePlayer) {
               player.username = req.body.username;
               player.email = req.body.email;
               player.password = req.body.password;
@@ -234,7 +233,7 @@ createConnection()
       });
       socket.on("name", (name: string) => {
         counter++;
-        let player = new Player(name, 500);
+        let player = new Player(name, 500 * i--);
         players = [...players, player];
         io.to(socket.id).emit("player", players[players.indexOf(player)]);
         io.to(socket.id).emit("id", players.indexOf(player));

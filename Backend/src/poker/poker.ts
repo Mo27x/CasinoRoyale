@@ -4,7 +4,8 @@ import Player from "./player";
 
 export default class Poker {
   private deck: Deck = new Deck();
-  public pot!: number;
+  public pots: number[] = [];
+  private potNum!: number;
   private button!: Player;
   public rounds!: number;
   private betted!: boolean;
@@ -15,14 +16,19 @@ export default class Poker {
   public currentPlayer!: Player;
   public firstBetter!: Player;
   public cards!: Card[];
-  public winners!: Player[];
+  public winners: Player[][] = [[]];
 
-  public constructor(private bigblind: number, public players: Player[]) {
+  public constructor(
+    private bigblind: number,
+    public players: Player[] // private endCallback = (game, winner) => {}
+  ) {
     this.cards = [];
     this.smallBlind = this.bigblind / 2;
     this.maxBet = this.bigblind;
     this.rounds = 0;
-    this.pot = 0;
+    this.potNum = 0;
+    // this.pots[this.potNum] = 0;
+    // this.pots = [...this.pots, 0];
     if (this.players.length == 2) {
       this.button = this.players[0];
       this.currentPlayer = this.button;
@@ -76,16 +82,24 @@ export default class Poker {
       player == this.currentPlayer
     ) {
       if (player.money > this.maxBet - player.gameBet) {
-        this.pot += this.maxBet - player.gameBet;
+        this.pots[this.potNum] += this.maxBet - player.gameBet;
         player.money -= this.maxBet - player.gameBet;
         player.roundBet += this.maxBet - player.gameBet;
         player.gameBet += this.maxBet - player.gameBet;
       } else {
         player.roundBet += player.money;
         player.gameBet += player.money;
-        this.pot += player.money;
+        this.pots[this.potNum] += player.money;
         player.money = 0;
         player.allIn = true;
+        if (this.getActivePlayers().length >= 2) {
+          this.potNum++;
+        } else {
+          for (let i = 0; i < this.pots.length; i++) {
+            this.winners[i] = this.compareHands(this.pots[i]);
+          }
+          console.log(this.winners);
+        }
       }
       // can return winners
       this.nextPlayer(player);
@@ -108,13 +122,20 @@ export default class Poker {
         player.money -= money;
         player.roundBet += money;
         player.gameBet += money;
-        this.pot += money;
+        this.pots[this.potNum] += money;
       } else {
         player.roundBet += player.money;
         player.gameBet += player.money;
-        this.pot += player.money;
+        this.pots[this.potNum] += player.money;
         player.money = 0;
         player.allIn = true;
+        if (this.getActivePlayers().length >= 2) {
+          this.potNum++;
+        } else {
+          for (let i = 0; i < this.pots.length; i++) {
+            this.winners[i] = this.compareHands(this.pots[i]);
+          }
+        }
       }
       if (this.rounds >= 0) {
         this.firstBetter = player;
@@ -138,21 +159,35 @@ export default class Poker {
       this.betted
     ) {
       if (player.money > money) {
-        this.pot += money;
+        this.pots[this.potNum] += money;
         player.money -= money;
         player.roundBet += money;
         this.firstBetter = player;
       } else if (player.money == money) {
-        this.pot += money;
+        this.pots[this.potNum] += money;
         player.roundBet += player.money;
         player.money -= money;
         player.allIn = true;
+        if (this.getActivePlayers().length >= 2) {
+          this.potNum++;
+        } else {
+          for (let i = 0; i < this.pots.length; i++) {
+            this.winners[i] = this.compareHands(this.pots[i]);
+          }
+        }
         this.firstBetter = player;
       } else {
-        this.pot += player.money;
+        this.pots[this.potNum] += player.money;
         player.roundBet += player.money;
         player.money = 0;
         player.allIn = true;
+        if (this.getActivePlayers().length >= 2) {
+          this.potNum++;
+        } else {
+          for (let i = 0; i < this.pots.length; i++) {
+            this.winners[i] = this.compareHands(this.pots[i]);
+          }
+        }
       }
       this.nextPlayer(player);
       return true;
@@ -160,22 +195,23 @@ export default class Poker {
     return false;
   };
 
-  fold = (player: Player): Player[] => {
+  fold = (player: Player): Player[][] => {
     if (this.findPlayer(player) && player == this.currentPlayer) {
-      if ([player] != this.players) {
+      if ([player] != this.getActivePlayers()) {
         player.folded = true;
         this.nextPlayer(player);
-        if (this.currentPlayer == this.firstBetter) {
-          this.rounds++;
+        if (this.getActivePlayers().length == 1) {
+          for (let i = 0; i < this.pots.length; i++) {
+            this.winners[i][0] = this.currentPlayer;
+          }
+          return this.winners;
         }
-      } else {
-        return this.compareHands();
       }
     }
     return [];
   };
 
-  round = (player: Player): Player[] => {
+  round = (player: Player): Player[][] => {
     // gotta review later
     if (this.currentPlayer != player) {
       if (this.currentPlayer == this.firstBetter) {
@@ -189,7 +225,10 @@ export default class Poker {
           this.displayCards(1);
         } else if (this.rounds == 5) {
           // finish game
-          return (this.winners = this.compareHands());
+          for (let i = 0; i < this.pots.length; i++) {
+            this.winners[i] = this.compareHands(this.pots[i]);
+          }
+          return this.winners;
         }
         this.resetBets();
       }
@@ -244,6 +283,16 @@ export default class Poker {
     });
   };
 
+  getActivePlayers = (): Player[] => {
+    let ret: Player[] = [];
+    this.players.forEach((player) => {
+      if (!player.folded && !player.allIn) {
+        ret = [...ret, player];
+      }
+    });
+    return ret;
+  };
+
   sidePot = () => {};
 
   // canDrawAll = (): boolean => {
@@ -255,7 +304,7 @@ export default class Poker {
   //   return true;
   // };
 
-  compareHands = (): Player[] => {
+  compareHands = (pot: number): Player[] => {
     let bestHandPlayers: Player[] = [];
     let activePlayers: Player[] = [];
     this.players.forEach((player) => {
@@ -345,6 +394,10 @@ export default class Poker {
         }
       }
     }
+    pot /= bestHandPlayers.length;
+    bestHandPlayers.forEach((bestHandPlayer) => {
+      bestHandPlayer.money += pot;
+    });
     return bestHandPlayers;
   };
 }
