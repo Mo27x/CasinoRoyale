@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToMany,
+  JoinTable,
+} from "typeorm";
+import { Token } from "./Token";
 
 @Entity()
 export class User {
@@ -17,6 +25,10 @@ export class User {
   @Column({ nullable: true })
   money: number;
 
-  @Column("simple-array")
-  friends: number[];
+  @ManyToMany((type) => User)
+  @JoinTable()
+  friends: User[];
+
+  @OneToMany((type) => Token, (token) => token.user)
+  tokens: Token[];
 }

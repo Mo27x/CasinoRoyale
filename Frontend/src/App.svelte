@@ -2,14 +2,13 @@
   import { io } from "socket.io-client";
   import { Router, Link, Route } from "svelte-navigator";
   import Home from "./Home.svelte";
+  import Player from "./Player.svelte";
   import Poker from "./Poker.svelte";
   const socket = io();
-  let username: string;
-
-  socket.on("username", (inUsername: string) => {
-    username = inUsername;
-    console.log(username);
-  });
+  const fetchUser = (async () => {
+    const res = await fetch("http://localhost:3000/data");
+    return res.json();
+  })();
 </script>
 
 <div class="entire">
@@ -25,6 +24,12 @@
         <Route path="poker" component={Poker} {socket} />
       </div>
     </Router>
+    {#await fetchUser}
+      <p>...waiting</p>
+    {:then data}
+      {console.log(data)}
+      <svelte:component this={Player} {...data} />
+    {/await}
   </center>
 </div>
 
