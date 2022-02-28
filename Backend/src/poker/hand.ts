@@ -3,7 +3,7 @@ import Card from "./card";
 export default class Hand {
   public cards!: Card[];
   constructor() {}
-  strength = (cards: Card[]): number[] => {
+  public strength = (cards: Card[]): number[] => {
     let aCards = [...this.cards, ...cards];
     let funRet: number | number[];
     funRet = this.royalFlush(aCards);
@@ -33,12 +33,12 @@ export default class Hand {
     funRet = this.pair(aCards);
     if (funRet != -1) return [2, funRet];
 
-    funRet = this.highCard(cards);
+    funRet = this.highCard();
     if (funRet[0] != -1) return [1, ...funRet];
 
     return [-1];
   };
-  royalFlush = (cards: Card[]): number => {
+  private royalFlush = (cards: Card[]): number => {
     let maxNum = -1;
     let suits = [0, 0, 0, 0];
     let i: number[][] = [[], [], [], []];
@@ -78,7 +78,7 @@ export default class Hand {
     }
     return maxNum;
   };
-  straightFlush = (cards: Card[]): number => {
+  private straightFlush = (cards: Card[]): number => {
     let suits = [0, 0, 0, 0];
     let suitsOccurrences: number[][] = [[], [], [], []];
     let nums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -134,7 +134,7 @@ export default class Hand {
     }
     return maxNum;
   };
-  fourOfAKind = (cards: Card[]): number => {
+  private fourOfAKind = (cards: Card[]): number => {
     let nums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let maxNum = -1;
     cards.forEach((card) => {
@@ -155,7 +155,7 @@ export default class Hand {
     }
     return maxNum;
   };
-  fullHouse = (cards: Card[]): number[] => {
+  private fullHouse = (cards: Card[]): number[] => {
     let nums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let maxNums = [-1, -1];
     cards.forEach((card) => {
@@ -203,7 +203,7 @@ export default class Hand {
     }
     return maxNums;
   };
-  flush = (cards: Card[]): number => {
+  private flush = (cards: Card[]): number => {
     let maxNum = -1;
     let suits = [0, 0, 0, 0];
     let maxNums: number[] = [-1, -1, -1, -1];
@@ -232,7 +232,7 @@ export default class Hand {
     }
     return maxNum;
   };
-  straight = (cards: Card[]): number => {
+  private straight = (cards: Card[]): number => {
     let maxNum = -1;
     let nums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     cards.forEach((card) => {
@@ -262,7 +262,7 @@ export default class Hand {
     }
     return maxNum;
   };
-  threeOfAKind = (cards: Card[]): number => {
+  private threeOfAKind = (cards: Card[]): number => {
     let maxNum = -1;
     let nums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     cards.forEach((card) => {
@@ -283,7 +283,7 @@ export default class Hand {
     }
     return maxNum;
   };
-  twoPair = (cards: Card[]): number[] => {
+  private twoPair = (cards: Card[]): number[] => {
     let maxNums = [-1, -1];
     // let retFE = true;
     let nums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -332,7 +332,7 @@ export default class Hand {
     }
     return maxNums;
   };
-  pair = (cards: Card[]): number => {
+  private pair = (cards: Card[]): number => {
     let maxNum = -1;
     let nums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     cards.forEach((card) => {
@@ -354,10 +354,10 @@ export default class Hand {
     }
     return maxNum;
   };
-  highCard = (cards: Card[]): number[] => {
+  public highCard = (): number[] => {
     let maxNums: number[] = [];
-    cards.sort((a, b) => b.num - a.num);
-    cards.forEach((card) => {
+    this.cards.sort((a, b) => b.num - a.num);
+    this.cards.forEach((card) => {
       maxNums = [...maxNums, card.num];
     });
     if (maxNums != []) {

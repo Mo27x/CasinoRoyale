@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { io } from "socket.io-client";
   import Card from "./Card.svelte";
   import Player from "./Player.svelte";
   export let socket;
@@ -65,9 +64,6 @@
     console.log(inPlayer);
     player = inPlayer;
   });
-  socket.on("id", (inId) => {
-    id = inId;
-  });
 </script>
 
 <div class="entire">
@@ -114,7 +110,6 @@
   .entire {
     margin: 0;
     padding: 0;
-    background-color: cadetblue;
     height: 100%;
     width: 100%;
   }
@@ -124,10 +119,6 @@
   }
 
   .table {
-    height: 500px;
-    width: 80%;
-    border-radius: 50%;
-    margin: 0 auto;
     width: 1000px;
     height: 400px;
     background-color: #4aad4a;

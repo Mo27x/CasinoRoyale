@@ -5,7 +5,6 @@ export default class Player {
   public gameBet!: number;
   public pots!: number[];
   public folded!: boolean;
-  public raised!: boolean;
   public allIn!: boolean;
   public hand!: Hand;
   public handStrength!: number[];

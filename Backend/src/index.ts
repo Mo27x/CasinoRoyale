@@ -99,7 +99,7 @@ createConnection()
       });
     };
 
-    app.get("/.*", (req: PlayerAuthInfoRequest, res) => {
+    app.get("*", (req: PlayerAuthInfoRequest, res) => {
       res.sendFile("index.html", {
         root: path.join(path.join(__dirname, "../../Frontend/public/")),
       });
@@ -137,6 +137,52 @@ createConnection()
     app.get("/protected", authorization, (req: PlayerAuthInfoRequest, res) => {
       return res.json({ player: { username: req.playerUsername } });
     });
+    app.post(
+      "/api/delete",
+      authorization,
+      async (req: PlayerAuthInfoRequest, res) => {
+        await userRepository.delete({ username: req.playerUsername });
+        // review to choose what to do
+        res.sendFile("index.html", {
+          root: path.join(path.join(__dirname, "../../Frontend/public/")),
+        });
+      }
+    );
+    app.post(
+      "/changePassword",
+      authorization,
+      body("newPassword")
+        .isLength({ min: 8 })
+        .withMessage("Password length must be at least 8 characters")
+        .not()
+        .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/, "i")
+        .withMessage(
+          "Password must contain a at least an uppercase letter , a lowercase letter, a number and a special character"
+        ),
+      body("newPasswordConfirm").custom((value, { req }) => {
+        if (value != req.body.newPassword) {
+          throw new Error("Password confirmation does not match password");
+        }
+        return true;
+      }),
+
+      async (req: PlayerAuthInfoRequest, res) => {
+        let user = await userRepository.findOne({
+          username: req.playerUsername,
+          password: createHash("sha256")
+            .update(req.body.oldPassword)
+            .digest("hex"),
+        });
+        if (user && req.body.newPassword) {
+          req.body.newPassword = createHash("sha256")
+            .update(req.body.newPassword)
+            .digest("hex");
+          user.password = req.body.newPassword;
+          user.tokens = [];
+          userRepository.save(user);
+        }
+      }
+    );
     app.post(
       "/api/login",
       body("email").isEmail().normalizeEmail(),

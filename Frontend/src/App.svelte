@@ -12,32 +12,30 @@
 </script>
 
 <div class="entire">
-  <center>
-    <h1>Casino Royale</h1>
-    <Router>
-      <nav>
-        <Link to="/">Home</Link>
-        <Link to="poker">Poker</Link>
-      </nav>
-      <div>
-        <Route path="/" component={Home} />
-        <Route path="poker" component={Poker} {socket} />
-      </div>
-    </Router>
-    {#await fetchUser}
-      <p>...waiting</p>
-    {:then data}
-      {console.log(data)}
-      <svelte:component this={Player} {...data} />
-    {/await}
-  </center>
+  <h1>Casino Royale</h1>
+  <Router>
+    <nav>
+      <Link to="/">Home</Link>
+      <Link to="poker">Poker</Link>
+    </nav>
+    <div>
+      <Route path="/" component={Home} />
+      <Route path="poker" component={Poker} {socket} />
+    </div>
+  </Router>
+  {#await fetchUser}
+    <p>...waiting</p>
+  {:then data}
+    {console.log(data)}
+    <svelte:component this={Player} {...data} />
+  {/await}
 </div>
 
 <style>
   .entire {
     margin: 0;
     padding: 0;
-    background-color: cadetblue;
+    /* background-color: cadetblue; */
     height: 100%;
     width: 100%;
   }

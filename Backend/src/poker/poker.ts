@@ -6,10 +6,9 @@ export default class Poker {
   private deck: Deck = new Deck();
   public pots: number[] = [];
   private potNum!: number;
-  private button!: Player;
   public rounds!: number;
   private betted!: boolean;
-  private roundMaxBet!: number;
+  // private roundMaxBet!: number;
   private maxBet: number;
   private smallBlind!: number;
   // change to private also players
@@ -17,11 +16,9 @@ export default class Poker {
   public firstBetter!: Player;
   public cards!: Card[];
   public winners: Player[][] = [[]];
+  public end = false;
 
-  public constructor(
-    private bigblind: number,
-    public players: Player[] // private endCallback = (game, winner) => {}
-  ) {
+  public constructor(private bigblind: number, public players: Player[]) {
     this.cards = [];
     this.smallBlind = this.bigblind / 2;
     this.maxBet = this.bigblind;
@@ -30,9 +27,8 @@ export default class Poker {
     // this.pots[this.potNum] = 0;
     // this.pots = [...this.pots, 0];
     if (this.players.length == 2) {
-      this.button = this.players[0];
-      this.currentPlayer = this.button;
-      this.bet(this.button, this.smallBlind);
+      this.currentPlayer = this.players[0];
+      this.bet(this.players[0], this.smallBlind);
       this.currentPlayer = players[1];
       this.bet(players[1], this.bigblind);
       this.firstBetter = players[1];
@@ -40,7 +36,6 @@ export default class Poker {
       this.firstBetter = this.currentPlayer;
     }
     if (this.players.length > 2) {
-      this.button = this.players[0];
       this.currentPlayer = this.players[1];
       this.bet(this.players[1], this.smallBlind);
       this.currentPlayer = this.players[2];
@@ -50,13 +45,13 @@ export default class Poker {
     }
   }
 
-  giveCards = () => {
+  private giveCards = () => {
     this.players.forEach((player) => {
       player.hand.cards = this.deck.getCards(2);
     });
   };
 
-  displayCards = (numCards: number) => {
+  private displayCards = (numCards: number) => {
     this.cards = [...this.cards, ...this.deck.getCards(numCards)];
   };
 
@@ -78,7 +73,7 @@ export default class Poker {
     this.maxBetFun();
     if (
       this.findPlayer(player) &&
-      player.roundBet < this.maxBet &&
+      player.gameBet < this.maxBet &&
       player == this.currentPlayer
     ) {
       if (player.money > this.maxBet - player.gameBet) {
@@ -147,14 +142,14 @@ export default class Poker {
     return false;
   };
 
-  raise = (player: Player, money: number) => {
+  raise = (player: Player, money: number): boolean => {
     this.maxBetFun();
     if (
       this.findPlayer(player) &&
       !player.folded &&
       player == this.currentPlayer &&
-      player.roundBet == this.maxBet &&
-      money >= this.roundMaxBet - player.roundBet &&
+      player.gameBet == this.maxBet &&
+      money >= this.maxBet - player.gameBet &&
       player != this.firstBetter &&
       this.betted
     ) {
@@ -211,7 +206,7 @@ export default class Poker {
     return [];
   };
 
-  round = (player: Player): Player[][] => {
+  private round = (player: Player): Player[][] => {
     // gotta review later
     if (this.currentPlayer != player) {
       if (this.currentPlayer == this.firstBetter) {
@@ -239,7 +234,7 @@ export default class Poker {
     return [];
   };
 
-  nextPlayer = (player: Player): Player => {
+  private nextPlayer = (player: Player): Player => {
     let j = this.players.indexOf(player) + 1;
     for (let i = j; i < this.players.length; i++) {
       if (!this.players[i].folded) {
@@ -259,7 +254,7 @@ export default class Poker {
     return player;
   };
 
-  findPlayer = (player: Player): boolean => {
+  private findPlayer = (player: Player): boolean => {
     for (let i = 0; i < this.players.length; i++) {
       if (this.players[i] == player) {
         return true;
@@ -268,7 +263,7 @@ export default class Poker {
     return false;
   };
 
-  maxBetFun = (): number => {
+  private maxBetFun = (): number => {
     let maxBet = -1;
     this.players.forEach((player) => {
       if (player.gameBet > maxBet) maxBet = player.gameBet;
@@ -277,13 +272,13 @@ export default class Poker {
     return maxBet;
   };
 
-  resetBets = () => {
+  private resetBets = () => {
     this.players.forEach((player) => {
       player.roundBet = 0;
     });
   };
 
-  getActivePlayers = (): Player[] => {
+  private getActivePlayers = (): Player[] => {
     let ret: Player[] = [];
     this.players.forEach((player) => {
       if (!player.folded && !player.allIn) {
@@ -292,8 +287,6 @@ export default class Poker {
     });
     return ret;
   };
-
-  sidePot = () => {};
 
   // canDrawAll = (): boolean => {
   //   for (let i = 0; i < this.players.length; i++) {
@@ -304,7 +297,7 @@ export default class Poker {
   //   return true;
   // };
 
-  compareHands = (pot: number): Player[] => {
+  private compareHands = (pot: number): Player[] => {
     let bestHandPlayers: Player[] = [];
     let activePlayers: Player[] = [];
     this.players.forEach((player) => {
@@ -314,7 +307,7 @@ export default class Poker {
     });
     activePlayers.forEach((player) => {
       player.handStrength = player.hand.strength(this.cards);
-      player.highestCardNums = player.hand.highCard(player.hand.cards);
+      player.highestCardNums = player.hand.highCard();
     });
     bestHandPlayers[0] = activePlayers[0];
     for (let i = 0; i < activePlayers.length; i++) {
