@@ -4,39 +4,66 @@
   import Home from "./Home.svelte";
   import Player from "./Player.svelte";
   import Poker from "./Poker.svelte";
-  const socket = io();
+  const socket = io({
+    path: "/poker",
+  });
   const fetchUser = (async () => {
     const res = await fetch("http://localhost:3000/data");
     return res.json();
   })();
 </script>
 
-<div class="entire">
-  <h1>Casino Royale</h1>
-  <Router>
-    <nav>
-      <Link to="/">Home</Link>
-      <Link to="poker">Poker</Link>
-    </nav>
-    <div>
+<div class="container">
+  <header class="header">CASINO ROYALE</header>
+  <aside class="sidebar">
+    <Router>
+      <div class="home">
+        <Link to="/">
+          <img class="icon" src="./icons/home.svg" alt="Home" />
+        </Link>
+      </div>
+      <div class="casino">
+        <Link to="poker">
+          <img class="icon" src="./icons/casino.svg" alt="Home" />
+        </Link>
+      </div>
+      <div class="friends">
+        <Link to="friends">
+          <img src="./icons/friends.svg" alt="Friends" class="icon" />
+        </Link>
+      </div>
+      <div class="account">
+        <Link to="account">
+          <img class="icon" src="./icons/account.svg" alt="Account" />
+        </Link>
+      </div>
+      <div class="support">
+        <Link to="support">
+          <img src="./icons/contact_support.svg" alt="support" class="icon" />
+        </Link>
+      </div>
+      <div class="settings">
+        <Link to="settings">
+          <img src="./icons/settings.svg" alt="Settings" class="icon" />
+        </Link>
+      </div>
+      <Link to="logout">
+        <div class="logout">
+          <img src="./icons/logout.svg" alt="Logout" class="icon" />
+        </div>
+      </Link>
+    </Router>
+  </aside>
+  <div class="main">
+    {#await fetchUser then data}
+      <svelte:component this={Player} {...data} />
+    {/await}
+    <Router>
       <Route path="/" component={Home} />
       <Route path="poker" component={Poker} {socket} />
-    </div>
-  </Router>
-  {#await fetchUser}
-    <p>...waiting</p>
-  {:then data}
-    {console.log(data)}
-    <svelte:component this={Player} {...data} />
-  {/await}
+    </Router>
+  </div>
 </div>
 
 <style>
-  .entire {
-    margin: 0;
-    padding: 0;
-    /* background-color: cadetblue; */
-    height: 100%;
-    width: 100%;
-  }
 </style>

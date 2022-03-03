@@ -65,7 +65,6 @@ createConnection()
     let players: Player[] = [];
     let game: Poker;
     let counter = 0;
-    let i = 2;
 
     // setup express app here
     // ...
@@ -77,6 +76,7 @@ createConnection()
       try {
         const data = jwt.verify(token, "goshawty") as JwtPayload;
         req.playerUsername = data.username;
+        console.log(data.username);
       } catch {
         res.sendStatus(403);
       }
@@ -99,11 +99,11 @@ createConnection()
       });
     };
 
-    app.get("*", (req: PlayerAuthInfoRequest, res) => {
-      res.sendFile("index.html", {
-        root: path.join(path.join(__dirname, "../../Frontend/public/")),
-      });
-    });
+    // app.get("*", (req: PlayerAuthInfoRequest, res) => {
+    //   res.sendFile("index.html", {
+    //     root: path.join(path.join(__dirname, "../../Frontend/public/")),
+    //   });
+    // });
 
     app.get("/", (req: PlayerAuthInfoRequest, res) => {
       res.sendFile("index.html", {
@@ -230,7 +230,11 @@ createConnection()
                     secure: true,
                   })
                   .status(200)
-                  .json({ message: "Logged in successfully" });
+                  .sendFile("index.html", {
+                    root: path.join(
+                      path.join(__dirname, "../../Frontend/public/")
+                    ),
+                  });
               }
             }
           } else {
@@ -286,8 +290,9 @@ createConnection()
           } else {
             return res.status(404).send("no bro");
           }
-
-          res.send("registered man");
+          res.sendFile("index.html", {
+            root: path.join(path.join(__dirname, "../../Frontend/public/")),
+          });
         }
       }
     );
@@ -298,10 +303,10 @@ createConnection()
         counter--;
         console.log("a user disconnected");
       });
-      socket.on("name", (name: string) => {
+      socket.on("game", () => {
         counter++;
-        let player = new Player(name, 500 * i--);
-        players = [...players, player];
+        let player = new Player("mo", 500);
+        players[socket.id] = player;
         io.to(socket.id).emit("player", players[players.indexOf(player)]);
         io.to(socket.id).emit("id", players.indexOf(player));
         if (counter > 1) {

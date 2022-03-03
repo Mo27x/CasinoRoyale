@@ -1,63 +1,131 @@
-html, body {
-	position: relative;
-	width: 100%;
-	height: 100%;
+html,
+body {
+  height: 100%;
+  width: 100%;
 }
 
 body {
-	color: #333;
-	margin: 0;
-	padding: 8px;
-	box-sizing: border-box;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  margin: 0;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-color: #252525;
+  box-sizing: border-box;
+  display: grid;
+  font-family: "Play", sans-serif;
+  font-size: 14pt;
+  color: #ededed;
 }
 
-a {
-	color: rgb(0,100,200);
-	text-decoration: none;
+.container {
+  display: grid;
+  grid-template-columns: minmax(5rem, 0.2fr) 1.8fr;
+  grid-template-rows: minmax(3rem, 0.2fr) 3.5fr 0.2fr;
+  gap: 0px 0px;
+  grid-auto-flow: row;
+  grid-template-areas:
+    ". ."
+    ". ."
+    ". .";
 }
 
-a:hover {
-	text-decoration: underline;
+.header {
+  grid-area: 1/1/2/3;
+  background-color: #ffffff10;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  text-align: center;
+  font-size: 34pt;
+  display: grid;
+  place-items: center;
 }
 
-a:visited {
-	color: rgb(0,80,160);
+.sidebar {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 0px 0px;
+  grid-template-areas:
+    "."
+    "."
+    "."
+    "."
+    "."
+    "."
+    "."
+    "."
+    "."
+    ".";
+  grid-area: 2/1/4/2;
+  background-color: #171717;
+}
+.icon {
+  height: 2.5rem;
+  width: 2.5rem;
+  padding: 0rem;
+  margin-left: 1rem;
+  margin-top: 1rem;
+}
+.home {
+  grid-row: 1/2;
+}
+.account {
+  grid-row: 4/5;
+}
+.games {
+  grid-row: 2/3;
+}
+.friends {
+  grid-row: 3/4;
+}
+.support {
+  grid-row: 6/7;
+}
+.settings {
+  grid-row: 7/8;
+}
+.logout {
+  grid-row: 10/11;
+}
+.main {
+  display: grid;
+  place-items: center;
+  grid-auto-columns: 1fr;
+  grid-template-columns:
+    minmax(min-content, 8.5rem) minmax(min-content, 8.5rem) minmax(
+      min-content,
+      8.5rem
+    )
+    minmax(min-content, 8.5rem) minmax(min-content, 8.5rem);
+  grid-template-rows:
+    0.3fr minmax(min-content, 8.5rem) 1.3fr 1.3fr minmax(min-content, 8.5rem)
+    0.5fr;
+  gap: 0px 0px;
+  grid-template-areas:
+    ". . . . ."
+    ". . . . ."
+    ". . . . ."
+    ". . . . ."
+    ". . . . .";
+  grid-area: 2/2/3/3;
+}
+.game {
+  display: grid;
+  place-items: center;
+  font-size: 24pt;
+  grid-area: 1/1/2/6;
+}
+.card {
+  height: 70px;
+  width: 50px;
+  border-radius: 5px;
+  display: inline-block;
+  position: relative;
+  background-color: white;
+  font-family: "Houschka Rounded";
 }
 
-label {
-	display: block;
-}
-
-input, button, select, textarea {
-	font-family: inherit;
-	font-size: inherit;
-	-webkit-padding: 0.4em 0;
-	padding: 0.4em;
-	margin: 0 0 0.5em 0;
-	box-sizing: border-box;
-	border: 1px solid #ccc;
-	border-radius: 2px;
-}
-
-input:disabled {
-	color: #ccc;
-}
-
-button {
-	color: #333;
-	background-color: #f4f4f4;
-	outline: none;
-}
-
-button:disabled {
-	color: #999;
-}
-
-button:not(:disabled):active {
-	background-color: #ddd;
-}
-
-button:focus {
-	border-color: #666;
+.footer {
+  grid-area: 3/2/4/3;
+  /* background-color: #da0037; */
+  background-color: #242423;
 }

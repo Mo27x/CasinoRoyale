@@ -3,7 +3,7 @@ import Hand from "./hand";
 export default class Player {
   public roundBet!: number;
   public gameBet!: number;
-  public pots!: number[];
+  public pots!: number;
   public folded!: boolean;
   public allIn!: boolean;
   public hand!: Hand;
@@ -15,5 +15,6 @@ export default class Player {
     this.folded = false;
     this.hand = new Hand();
     this.gameBet = 0;
+    this.pots = -1;
   }
 }

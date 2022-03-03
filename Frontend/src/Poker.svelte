@@ -3,7 +3,6 @@
   import Player from "./Player.svelte";
   export let socket;
   let cards = [];
-  let name: string = "";
   let id: number = -1;
   let playerCards = [];
   let currentPlayer = [];
@@ -13,10 +12,6 @@
   function send(play: string) {
     socket.emit(play, id);
   }
-
-  const sendName = () => {
-    socket.emit("name", name);
-  };
 
   const changeValues = (card): void => {
     if (card.num == 1) card.num = "A";
@@ -66,66 +61,81 @@
   });
 </script>
 
-<div class="entire">
-  <center>
-    <div class="main">
-      <input bind:value={name} type="text" required />
-      <button on:click={() => sendName()}>Send</button>
-      <div class="table">
-        <div class="card-place">
-          {#if cards != []}
-            {#each cards as card}
-              <svelte:component this={Card} {...card} />
-            {/each}
-          {/if}
-        </div>
-      </div>
-      {#if playerCards != []}
-        {#each playerCards as card}
+<div class="main">
+  <div class="table">
+    <div class="card-place">
+      {#if cards != []}
+        {#each cards as card}
           <svelte:component this={Card} {...card} />
         {/each}
       {/if}
-      {#if players != []}
-        {#each players as player}
-          <svelte:component this={Player} {...player} />
-        {/each}
-      {/if}
-      {#if player != []}
-        You: <svelte:component this={Player} {...player} />
-      {/if}
-      {#if currentPlayer != []}
-        CurrentPlayer: <svelte:component this={Player} {...currentPlayer} />
-      {/if}
-      <button on:click={() => send("check")}>Check</button>
-      <button on:click={() => send("bet")}>Bet</button>
-      <button on:click={() => send("fold")}>Fold</button>
-      <button on:click={() => send("raise")}>Raise</button>
-      <button on:click={() => send("call")}>Call</button>
-      <button on:click={() => send("playerCards")}>player Cards</button>
     </div>
-  </center>
+  </div>
+  {#if playerCards != []}
+    {#each playerCards as card}
+      <svelte:component this={Card} {...card} />
+    {/each}
+  {/if}
+  {#if players != []}
+    {#each players as player}
+      <svelte:component this={Player} {...player} />
+    {/each}
+  {/if}
+  {#if player != []}
+    <div class=" player player1">
+      You: <svelte:component this={Player} {...player} />
+    </div>
+  {/if}
+  {#if currentPlayer != []}
+    <div class=" player player2">
+      CurrentPlayer: <svelte:component this={Player} {...currentPlayer} />
+    </div>
+  {/if}
+  <div class="buttons">
+    <button on:click={() => send("check")}>Check</button>
+    <button on:click={() => send("bet")}>Bet</button>
+    <button on:click={() => send("fold")}>Fold</button>
+    <button on:click={() => send("raise")}>Raise</button>
+    <button on:click={() => send("call")}>Call</button>
+    <button on:click={() => send("playerCards")}>cards</button>
+  </div>
 </div>
 
 <style>
-  .entire {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
-  }
-  .main {
-    width: 100vw;
-    height: 100vh;
-  }
-
+  /* .main {
+    display: grid;
+    place-items: center;
+    grid-auto-columns: 1fr;
+    grid-template-columns:
+      minmax(min-content, 8.5rem) minmax(min-content, 8.5rem) minmax(
+        min-content,
+        8.5rem
+      )
+      minmax(min-content, 8.5rem) minmax(min-content, 8.5rem);
+    grid-template-rows:
+      0.3fr minmax(min-content, 8.5rem) 1.3fr 1.3fr minmax(min-content, 8.5rem)
+      0.5fr;
+    gap: 0px 0px;
+    grid-template-areas:
+      ". . . . ."
+      ". . . . ."
+      ". . . . ."
+      ". . . . ."
+      ". . . . .";
+    grid-area: 2/2/3/3;
+  } */
   .table {
+    grid-area: 3/2/5/5;
     width: 1000px;
-    height: 400px;
-    background-color: #4aad4a;
+    height: 390px;
+    background-color: #2b8b60;
     position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
     border-radius: 150px;
     position: relative;
-    border: 1em solid #a95555;
+    border: 15px solid #212022;
   }
 
   .table:before {
@@ -133,7 +143,7 @@
     border: 7px solid rgba(0, 0, 0, 0.1);
     display: block;
     width: 1015px;
-    height: 415px;
+    height: 405px;
     border-radius: 150px;
     position: absolute;
     top: -15px;
@@ -144,17 +154,16 @@
     border: 7px solid rgba(0, 0, 0, 0.1);
     display: block;
     width: 985px;
-    height: 385px;
+    height: 375px;
     border-radius: 130px;
     position: absolute;
     top: 0;
     left: 0;
   }
-
-  .table > .card-place {
-    border: 5px solid #63c763;
+  .card-place {
+    border: 5px solid #3ca576;
     height: 100px;
-    width: 363px;
+    width: 400px;
     position: absolute;
     border-radius: 10px;
     padding: 10px;
@@ -163,7 +172,63 @@
     transform: translateX(-50%) translateY(-50%);
     box-sizing: border-box;
   }
-  .card-place > Card {
-    margin-right: 15px;
+  .player {
+    border: 0.2rem solid #ededed;
+  }
+
+  .player1 {
+    grid-area: 5/4/6/5;
+  }
+  .player2 {
+    grid-area: 5/3/6/4;
+  }
+  .player3 {
+    grid-area: 5/2/6/3;
+  }
+  .player4 {
+    grid-area: 4/1/5/2;
+  }
+  .player5 {
+    grid-area: 3/1/4/2;
+  }
+  .player6 {
+    grid-area: 2/2/3/3;
+  }
+  .player7 {
+    grid-area: 2/3/3/4;
+  }
+  .player8 {
+    grid-area: 2/4/3/5;
+  }
+  .player9 {
+    grid-area: 3/5/4/6;
+  }
+  .player10 {
+    grid-area: 4/5/5/6;
+  }
+
+  .buttons {
+    grid-area: 6/2/7/5;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    background-color: #da0037;
+  }
+  button {
+    height: 2rem;
+    width: 5rem;
+    background-color: #2b8b60;
+    border-radius: 0.3rem;
+  }
+  .stripes {
+    border: 0.3rem solid #ffffff;
+    border-radius: 0.3rem;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      #8b89ff 0rem,
+      #8b89ff 0.3rem,
+      #6765ff 0.3rem,
+      #6765ff 0.6rem
+    );
   }
 </style>
