@@ -13,6 +13,10 @@
     socket.emit(play, id);
   }
 
+  const game = (user: {}) => {
+    socket.emit("game", user);
+  };
+
   const changeValues = (card): void => {
     if (card.num == 1) card.num = "A";
     if (card.num == 11) card.num = "J";
@@ -28,6 +32,7 @@
       card.color = "red";
     }
   };
+
   socket.on("cards", (card) => {
     cards = JSON.parse(card);
     for (let i = 0; i < cards.length; i++) {
@@ -36,30 +41,45 @@
       cards[i].suit = "&" + cards[i].suit + ";";
     }
   });
+
   socket.on("playerCards", (card) => {
     playerCards = JSON.parse(card);
-    console.log(playerCards);
     for (let i = 0; i < playerCards.length; i++) {
       changeValues(playerCards[i]);
       getColor(playerCards[i]);
       playerCards[i].suit = "&" + playerCards[i].suit + ";";
     }
   });
+
   socket.on("winners", (winners) => {
     console.log(winners);
   });
+
   socket.on("currentPlayer", (player) => {
     currentPlayer = player;
   });
+
   socket.on("players", (inPlayers) => {
     console.log(inPlayers);
     players = inPlayers;
   });
+
   socket.on("player", (inPlayer) => {
-    console.log(inPlayer);
     player = inPlayer;
   });
+
+  const fetchUser = (async () => {
+    const res = await fetch("http://localhost:3000/data");
+    return res.json();
+  })();
 </script>
+
+{#await fetchUser then user}
+  {#if typeof user != "undefined"}
+    {console.debug("user")}
+    {game(user)}
+  {/if}
+{/await}
 
 <div class="main">
   <div class="table">
@@ -78,12 +98,12 @@
   {/if}
   {#if players != []}
     {#each players as player}
-      <svelte:component this={Player} {...player} />
+      <!-- <svelte:component this={Player} {...player} /> -->
     {/each}
   {/if}
   {#if player != []}
     <div class=" player player1">
-      You: <svelte:component this={Player} {...player} />
+      <!-- You: <svelte:component this={Player} {...player} /> -->
     </div>
   {/if}
   {#if currentPlayer != []}

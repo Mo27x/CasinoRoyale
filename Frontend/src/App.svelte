@@ -4,9 +4,7 @@
   import Home from "./Home.svelte";
   import Player from "./Player.svelte";
   import Poker from "./Poker.svelte";
-  const socket = io({
-    path: "/poker",
-  });
+  const socket = io();
   const fetchUser = (async () => {
     const res = await fetch("http://localhost:3000/data");
     return res.json();
@@ -56,7 +54,9 @@
   </aside>
   <div class="main">
     {#await fetchUser then data}
-      <svelte:component this={Player} {...data} />
+      {#if typeof data != "undefined"}
+        <svelte:component this={Player} {...data} />
+      {/if}
     {/await}
     <Router>
       <Route path="/" component={Home} />

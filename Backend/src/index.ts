@@ -64,7 +64,6 @@ createConnection()
     let tokenRepository = connection.getRepository(Token);
     let players: Player[] = [];
     let game: Poker;
-    let counter = 0;
 
     // setup express app here
     // ...
@@ -76,7 +75,6 @@ createConnection()
       try {
         const data = jwt.verify(token, "goshawty") as JwtPayload;
         req.playerUsername = data.username;
-        console.log(data.username);
       } catch {
         res.sendStatus(403);
       }
@@ -300,17 +298,24 @@ createConnection()
     io.on("connection", (socket) => {
       console.log("a user connected");
       socket.on("disconnect", () => {
-        counter--;
         console.log("a user disconnected");
       });
-      socket.on("game", () => {
-        counter++;
-        let player = new Player("mo", 500);
-        players[socket.id] = player;
-        io.to(socket.id).emit("player", players[players.indexOf(player)]);
+
+      socket.on("game", (user) => {
+        // check if user has money before creating player
+        let player = new Player(user.username, user.money);
+        // players[socket.id] = player;
+        players = [...players, player];
+        const play = {
+          username: player.username,
+          money: player.money,
+          cards: player.hand.cards,
+        };
+        io.to(socket.id).emit("player", play);
         io.to(socket.id).emit("id", players.indexOf(player));
-        if (counter > 1) {
+        if (io.engine.clientsCount == 2) {
           game = new Poker(200, players);
+          console.log(players.length, game.players.length, game.players);
           io.emit("currentPlayer", game.currentPlayer);
           io.emit("players", players);
         }
