@@ -5,8 +5,8 @@
   let cards = [];
   let id: number = -1;
   let playerCards = [];
-  let currentPlayer = [];
-  let player = [];
+  let currentPlayer = {};
+  let player;
   let players = [];
 
   function send(play: string) {
@@ -97,20 +97,25 @@
     {/each}
   {/if}
   {#if players != []}
-    {#each players as player}
-      <!-- <svelte:component this={Player} {...player} /> -->
+    {#each players as recievedPlayer, i}
+      {#if recievedPlayer.username != player.username}
+        {#if i != 1}
+          <div class="player player{i}">
+            <svelte:component this={Player} {...recievedPlayer} />
+          </div>
+        {/if}
+      {:else}
+        <div class="player player1">
+          <svelte:component this={Player} {...recievedPlayer} />
+        </div>
+      {/if}
     {/each}
   {/if}
-  {#if player != []}
-    <div class=" player player1">
-      <!-- You: <svelte:component this={Player} {...player} /> -->
-    </div>
-  {/if}
-  {#if currentPlayer != []}
+  <!-- {#if currentPlayer != []}
     <div class=" player player2">
       CurrentPlayer: <svelte:component this={Player} {...currentPlayer} />
     </div>
-  {/if}
+  {/if} -->
   <div class="buttons">
     <button on:click={() => send("check")}>Check</button>
     <button on:click={() => send("bet")}>Bet</button>
@@ -196,34 +201,34 @@
     border: 0.2rem solid #ededed;
   }
 
-  .player1 {
+  .player0 {
     grid-area: 5/4/6/5;
   }
-  .player2 {
+  .player1 {
     grid-area: 5/3/6/4;
   }
-  .player3 {
+  .player2 {
     grid-area: 5/2/6/3;
   }
-  .player4 {
+  .player3 {
     grid-area: 4/1/5/2;
   }
-  .player5 {
+  .player4 {
     grid-area: 3/1/4/2;
   }
-  .player6 {
+  .player5 {
     grid-area: 2/2/3/3;
   }
-  .player7 {
+  .player6 {
     grid-area: 2/3/3/4;
   }
-  .player8 {
+  .player7 {
     grid-area: 2/4/3/5;
   }
-  .player9 {
+  .player8 {
     grid-area: 3/5/4/6;
   }
-  .player10 {
+  .player9 {
     grid-area: 4/5/5/6;
   }
 

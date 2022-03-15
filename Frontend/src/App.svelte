@@ -9,6 +9,7 @@
     const res = await fetch("http://localhost:3000/data");
     return res.json();
   })();
+  let loggedIn = true;
 </script>
 
 <div class="container">
@@ -56,12 +57,12 @@
     {#await fetchUser then data}
       {#if typeof data != "undefined"}
         <svelte:component this={Player} {...data} />
+        <Router>
+          <Route path="/" component={Home} {loggedIn} />
+          <Route path="poker" component={Poker} {socket} />
+        </Router>
       {/if}
     {/await}
-    <Router>
-      <Route path="/" component={Home} />
-      <Route path="poker" component={Poker} {socket} />
-    </Router>
   </div>
 </div>
 

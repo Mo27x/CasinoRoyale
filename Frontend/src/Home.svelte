@@ -1,6 +1,7 @@
 <script lang="ts">
   let login = true;
-  let loggedIn = false;
+  export let loggedIn = false;
+  console.log(loggedIn);
   const handleClick = () => {
     login = !login;
   };

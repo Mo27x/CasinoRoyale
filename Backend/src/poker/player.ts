@@ -10,7 +10,11 @@ export default class Player {
   public handStrength!: number[];
   public highestCardNums!: number[];
 
-  public constructor(public readonly username: string, public money: number) {
+  public constructor(
+    public readonly username: string,
+    public money: number,
+    public id: string
+  ) {
     this.roundBet = 0;
     this.hasFolded = false;
     this.hand = new Hand();

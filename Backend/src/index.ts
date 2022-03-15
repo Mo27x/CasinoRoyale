@@ -64,6 +64,14 @@ createConnection()
     let tokenRepository = connection.getRepository(Token);
     let players: Player[] = [];
     let game: Poker;
+    let rooms = [];
+    let name = Buffer.from(Math.random().toString())
+      .toString("base64")
+      .substring(0, 7);
+    rooms = [
+      ...rooms,
+      Buffer.from(Math.random().toString()).toString("base64").substring(0, 7),
+    ];
 
     // setup express app here
     // ...
@@ -113,7 +121,9 @@ createConnection()
       let player = await userRepository.findOne({
         username: req.playerUsername,
       });
-      res.json({ username: player.username, money: player.money });
+      if (player) {
+        res.json({ username: player.username, money: player.money });
+      }
     });
 
     app.get(
@@ -236,7 +246,7 @@ createConnection()
               }
             }
           } else {
-            res.status(404).send("no bro");
+            res.status(404);
           }
         }
       }
@@ -299,25 +309,25 @@ createConnection()
       console.log("a user connected");
       socket.on("disconnect", () => {
         console.log("a user disconnected");
+        deletePlayer(game, socket.id);
       });
-
       socket.on("game", (user) => {
-        // check if user has money before creating player
-        let player = new Player(user.username, user.money);
-        // players[socket.id] = player;
-        players = [...players, player];
-        const play = {
-          username: player.username,
-          money: player.money,
-          cards: player.hand.cards,
-        };
-        io.to(socket.id).emit("player", play);
-        io.to(socket.id).emit("id", players.indexOf(player));
-        if (io.engine.clientsCount == 2) {
-          game = new Poker(200, players);
-          console.log(players.length, game.players.length, game.players);
-          io.emit("currentPlayer", game.currentPlayer);
-          io.emit("players", players);
+        if (!isPlayer(user.username)) {
+          let player = new Player(user.username, user.money, socket.id);
+          players = [...players, player];
+          const play = {
+            username: player.username,
+            money: player.money,
+            cards: player.hand.cards,
+          };
+          io.to(socket.id).emit("player", play);
+          io.to(socket.id).emit("id", players.indexOf(player));
+          if (io.engine.clientsCount == 2) {
+            game = new Poker(200, players);
+            console.log(players.length, game.players.length, game.players);
+            io.emit("currentPlayer", game.currentPlayer);
+            io.emit("players", players);
+          }
         }
       });
       socket.on("check", (id) => {
@@ -370,6 +380,61 @@ createConnection()
         );
       });
     });
+
+    io.of("/").adapter.on("create-room", (room) => {
+      console.log(`room ${room} was created`);
+    });
+
+    io.of("/").adapter.on("join-room", (room, id) => {
+      console.log(`socket ${id} has joined room ${room}`);
+    });
+
+    const simplifyPlayers = (players: Player[]) => {
+      let playersToSend = [];
+      players.forEach((player) => {
+        playersToSend = [
+          ...playersToSend,
+          {
+            username: player.username,
+            money: player.money,
+          },
+        ];
+      });
+      return playersToSend;
+    };
+
+    const simplifyPlayer = (player: Player) => {
+      return {
+        username: player.username,
+        money: player.money,
+        cards: player.hand.cards,
+      };
+    };
+
+    const isPlayer = (username: string): boolean => {
+      for (let i = 0; i < players.length; i++) {
+        if (username == players[i].username) {
+          console.log(username, players[i].username, i);
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const deletePlayer = (game: Poker, id: string) => {
+      for (let i = 0; i < players.length; i++) {
+        if (id == players[i].id) {
+          game.fold(players[i]);
+          players.splice(i, 1);
+        }
+      }
+    };
+
+    const getRandomString = (): string => {
+      return Buffer.from(Math.random().toString())
+        .toString("base64")
+        .substring(0, 7);
+    };
 
     // start express server
     httpServer.listen(3000);
