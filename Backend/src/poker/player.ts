@@ -13,7 +13,8 @@ export default class Player {
   public constructor(
     public readonly username: string,
     public money: number,
-    public id: string
+    public id: string,
+    public roomId: string
   ) {
     this.roundBet = 0;
     this.hasFolded = false;

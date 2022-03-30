@@ -25,7 +25,6 @@ export default class Poker {
     this.rounds = 0;
     this.potNum = 0;
     this.pots[this.potNum] = 0;
-    // this.pots = [...this.pots, 0];
     if (this.getPlayersLength() == 2) {
       this.currentPlayer = this.players[0];
       this.bet(this.players[0], this.smallBlind);

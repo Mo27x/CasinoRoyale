@@ -15,6 +15,7 @@ import Poker from "./poker/poker";
 import Player from "./poker/player";
 import cookieParser from "cookie-parser";
 import { Token } from "./entity/Token";
+import Room from "./poker/room";
 export interface PlayerAuthInfoRequest extends Request {
   playerUsername: string;
 }
@@ -63,15 +64,7 @@ createConnection()
     let userRepository = connection.getRepository(User);
     let tokenRepository = connection.getRepository(Token);
     let players: Player[] = [];
-    let game: Poker;
-    let rooms = [];
-    let name = Buffer.from(Math.random().toString())
-      .toString("base64")
-      .substring(0, 7);
-    rooms = [
-      ...rooms,
-      Buffer.from(Math.random().toString()).toString("base64").substring(0, 7),
-    ];
+    let rooms: Room[] = [];
 
     // setup express app here
     // ...
@@ -81,7 +74,7 @@ createConnection()
         return res.status(403).json({ message: "Forbidden" });
       }
       try {
-        const data = jwt.verify(token, "goshawty") as JwtPayload;
+        const data = jwt.verify(token, "casino") as JwtPayload;
         req.playerUsername = data.username;
       } catch {
         res.sendStatus(403);
@@ -219,7 +212,7 @@ createConnection()
               if (player) {
                 const token = jwt.sign(
                   { username: player.username },
-                  "goshawty",
+                  "casino",
                   { expiresIn: "24h" }
                 );
                 let tokenToSave = new Token();
@@ -296,7 +289,7 @@ createConnection()
               return res.send("Email or Username already exists");
             }
           } else {
-            return res.status(404).send("no bro");
+            return res.status(404);
           }
           res.sendFile("index.html", {
             root: path.join(path.join(__dirname, "../../Frontend/public/")),
@@ -309,74 +302,83 @@ createConnection()
       console.log("a user connected");
       socket.on("disconnect", () => {
         console.log("a user disconnected");
-        deletePlayer(game, socket.id);
+        deletePlayer(getRoomById(getPlayerById(socket.id).roomId), socket.id);
       });
       socket.on("game", (user) => {
         if (!isPlayer(user.username)) {
-          let player = new Player(user.username, user.money, socket.id);
-          players = [...players, player];
+          const roomId = getRoom();
+          let player = new Player(user.username, user.money, socket.id, roomId);
+          let room = getRoomById(roomId);
+          socket.join(roomId);
+          room.players = [...room.players, player];
           const play = {
             username: player.username,
             money: player.money,
             cards: player.hand.cards,
           };
           io.to(socket.id).emit("player", play);
-          io.to(socket.id).emit("id", players.indexOf(player));
-          if (io.engine.clientsCount == 2) {
-            game = new Poker(200, players);
-            console.log(players.length, game.players.length, game.players);
-            io.emit("currentPlayer", game.currentPlayer);
-            io.emit("players", players);
+          io.to(socket.id).emit("id", room.players.indexOf(player));
+          // this is shit, I mean '> 1'
+          if (io.sockets.adapter.rooms.get(getRoomById(roomId).id).size > 1) {
+            room.startGame(200);
+            io.emit("currentPlayer", room.game.currentPlayer);
+            io.emit("players", room.players);
           }
         }
       });
       socket.on("check", (id) => {
-        game.check(game.players[id]);
-        io.emit("cards", JSON.stringify(game.cards));
-        io.emit("players", players);
-        if (game.rounds == 5) {
-          io.emit("winners", JSON.stringify(game.winners));
+        let room = getRoomById(getPlayerById(socket.id).roomId);
+        room.game.check(room.game.players[id]);
+        io.emit("cards", JSON.stringify(room.game.cards));
+        io.emit("players", room.players);
+        if (room.game.rounds == 5) {
+          io.emit("winners", JSON.stringify(room.game.winners));
         }
-        io.emit("currentPlayer", game.currentPlayer);
+        io.emit("currentPlayer", room.game.currentPlayer);
       });
 
       socket.on("call", (id: number) => {
-        game.call(game.players[id]);
-        io.emit("cards", JSON.stringify(game.cards));
-        io.emit("players", players);
-        if (game.rounds == 5) {
-          io.emit("winners", JSON.stringify(game.winners));
+        let room = getRoomById(getPlayerById(socket.id).roomId);
+        room.game.call(room.game.players[id]);
+        io.emit("cards", JSON.stringify(room.game.cards));
+        io.emit("players", room.players);
+        if (room.game.rounds == 5) {
+          io.emit("winners", JSON.stringify(room.game.winners));
         }
-        io.emit("currentPlayer", game.currentPlayer);
+        io.emit("currentPlayer", room.game.currentPlayer);
       });
 
       socket.on("bet", (id: number) => {
-        game.bet(game.players[id], 200);
-        io.emit("cards", JSON.stringify(game.cards));
-        io.emit("players", players);
-        io.emit("currentPlayer", game.currentPlayer);
+        let room = getRoomById(getPlayerById(socket.id).roomId);
+        room.game.bet(room.game.players[id], 200);
+        io.emit("cards", JSON.stringify(room.game.cards));
+        io.emit("players", room.players);
+        io.emit("currentPlayer", room.game.currentPlayer);
       });
 
       socket.on("raise", (id: number) => {
-        game.raise(game.players[id], 200);
-        io.emit("cards", JSON.stringify(game.cards));
-        io.emit("players", players);
-        io.emit("currentPlayer", game.currentPlayer);
+        let room = getRoomById(getPlayerById(socket.id).roomId);
+        room.game.raise(room.game.players[id], 200);
+        io.emit("cards", JSON.stringify(room.game.cards));
+        io.emit("players", room.players);
+        io.emit("currentPlayer", room.game.currentPlayer);
       });
 
       socket.on("fold", (id) => {
-        game.fold(game.players[id]);
-        io.emit("cards", JSON.stringify(game.cards));
-        io.emit("players", players);
-        if (game.rounds == 5) {
-          io.emit("winners", JSON.stringify(game.winners));
+        let room = getRoomById(getPlayerById(socket.id).roomId);
+        room.game.fold(room.game.players[id]);
+        io.emit("cards", JSON.stringify(room.game.cards));
+        io.emit("players", room.players);
+        if (room.game.rounds == 5) {
+          io.emit("winners", JSON.stringify(room.game.winners));
         }
-        io.emit("currentPlayer", game.currentPlayer);
+        io.emit("currentPlayer", room.game.currentPlayer);
       });
       socket.on("playerCards", (id) => {
+        let room = getRoomById(getPlayerById(socket.id).roomId);
         io.to(socket.id).emit(
           "playerCards",
-          JSON.stringify(game.players[id].hand.cards)
+          JSON.stringify(room.game.players[id].hand.cards)
         );
       });
     });
@@ -421,21 +423,54 @@ createConnection()
       return false;
     };
 
-    const deletePlayer = (game: Poker, id: string) => {
+    const getPlayerById = (id: string) => {
+      for (let i = 0; i < players.length; i++) {
+        if (players[i].id === id) {
+          return players[i];
+        }
+      }
+    };
+
+    const deletePlayer = (room: Room, id: string) => {
       for (let i = 0; i < players.length; i++) {
         if (id == players[i].id) {
-          game.fold(players[i]);
+          room.game.fold(players[i]);
           players.splice(i, 1);
         }
       }
     };
 
-    const getRandomString = (): string => {
-      return Buffer.from(Math.random().toString())
+    const createRoom = (): string => {
+      const str = Buffer.from(Math.random().toString())
         .toString("base64")
         .substring(0, 7);
+      rooms = [...rooms, new Room(str)];
+      return str;
     };
 
+    const getRoom = (): string => {
+      let availableRooms: string[] = [];
+      for (let i = 0; i < rooms.length; i++) {
+        // perfect number of players to play a poker game
+        if (io.sockets.adapter.rooms.get(rooms[i].id).size < 6) {
+          availableRooms = [...availableRooms, rooms[i].id];
+        }
+      }
+      if (availableRooms.length < 1) {
+        return createRoom();
+      }
+      return availableRooms[0];
+    };
+
+    const getRoomById = (id: string): Room => {
+      for (let i = 0; i < rooms.length; i++) {
+        if (rooms[i].id === id) {
+          return rooms[i];
+        }
+      }
+    };
+
+    const insertPlayerInRoom = () => {};
     // start express server
     httpServer.listen(3000);
 
