@@ -16,6 +16,7 @@ import Player from "./poker/player";
 import cookieParser from "cookie-parser";
 import { Token } from "./entity/Token";
 import Room from "./poker/room";
+import { Friendship } from "./entity/Friendship";
 export interface PlayerAuthInfoRequest extends Request {
   playerUsername: string;
 }
@@ -31,6 +32,7 @@ createConnection()
     const io = new Server(httpServer);
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "../../Frontend/public/")));
+    app.use(express.static(path.join("public/")));
     app.use(cookieParser());
     app.use(
       express.urlencoded({
@@ -63,6 +65,7 @@ createConnection()
 
     let userRepository = connection.getRepository(User);
     let tokenRepository = connection.getRepository(Token);
+    let friendshipRepository = connection.getRepository(Friendship);
     let players: Player[] = [];
     let rooms: Room[] = [];
 
@@ -108,6 +111,21 @@ createConnection()
       res.sendFile("index.html", {
         root: path.join(path.join(__dirname, "../../Frontend/public/")),
       });
+    });
+
+    app.get("/ask", (req, res) => {
+      res.sendFile(path.join(__dirname, "./public", "ask.html"));
+    });
+
+    app.post("/friendship", async (req, res) => {
+      let user = await userRepository.findOne({ username: req.body.me });
+      let other = await userRepository.findOne({ username: req.body.other });
+      let friendship = new Friendship();
+      friendship.asker = user;
+      friendship.answerer = other;
+      friendship.friended = false;
+      friendshipRepository.save(friendship);
+      res.send("friended with" + other.username);
     });
 
     app.get("/data", authorization, async (req: PlayerAuthInfoRequest, res) => {
@@ -283,7 +301,8 @@ createConnection()
               player.email = req.body.email;
               player.password = req.body.password;
               player.money = 20000;
-              player.friends = [];
+              player.requests = [];
+              player.responses = [];
               userRepository.save(player);
             } else {
               return res.send("Email or Username already exists");
@@ -302,7 +321,9 @@ createConnection()
       console.log("a user connected");
       socket.on("disconnect", () => {
         console.log("a user disconnected");
-        deletePlayer(getRoomById(getPlayerById(socket.id).roomId), socket.id);
+        if (getPlayerById(socket.id)) {
+          deletePlayer(getRoomById(getPlayerById(socket.id).roomId), socket.id);
+        }
       });
       socket.on("game", (user) => {
         if (!isPlayer(user.username)) {

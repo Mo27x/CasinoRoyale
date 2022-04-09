@@ -2,7 +2,7 @@
   "type": "mysql",
   "host": "localhost",
   "port": 3306,
-  "username": "root",
+  "username": "mo",
   "password": "Napier2.71",
   "database": "casinoroyale",
   "synchronize": true,
@@ -14,5 +14,6 @@
     "entitiesDir": "src/entity",
     "migrationsDir": "src/migration",
     "subscribersDir": "src/subscriber"
-  }
+  },
+  "socketPath": "/var/run/mysqld/mysqld.sock"
 }

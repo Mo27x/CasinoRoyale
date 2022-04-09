@@ -7,5 +7,10 @@ export default class Room {
   public constructor(public readonly id: string) {}
   startGame = (bigBlind: number) => {
     this.game = new Poker(bigBlind, this.players);
+    this.rotateBlinds();
+  };
+  rotateBlinds = () => {
+    const first = this.players.shift();
+    this.players = [...this.players, first];
   };
 }

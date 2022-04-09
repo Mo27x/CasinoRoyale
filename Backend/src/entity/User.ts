@@ -6,6 +6,7 @@ import {
   ManyToMany,
   JoinTable,
 } from "typeorm";
+import { Friendship } from "./Friendship";
 import { Token } from "./Token";
 
 @Entity()
@@ -25,10 +26,12 @@ export class User {
   @Column({ nullable: true })
   money: number;
 
-  @ManyToMany((type) => User)
-  @JoinTable()
-  friends: User[];
+  @OneToMany(() => Friendship, (Friendship) => Friendship.asker)
+  requests: Friendship[];
 
-  @OneToMany((type) => Token, (token) => token.user)
+  @OneToMany(() => Friendship, (Friendship) => Friendship.asker)
+  responses: Friendship[];
+
+  @OneToMany(() => Token, (token) => token.user)
   tokens: Token[];
 }
