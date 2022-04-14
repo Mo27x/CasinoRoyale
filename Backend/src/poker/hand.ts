@@ -201,7 +201,7 @@ export default class Hand {
     if (maxNums[0] == -1 || maxNums[1] == -1) {
       maxNums = [-1, -1];
     }
-    return maxNums;
+    return maxNums.sort((a, b) => b - a);
   };
   private flush = (cards: Card[]): number => {
     let maxNum = -1;
@@ -330,7 +330,8 @@ export default class Hand {
     if (maxNums[0] == -1 || maxNums[1] == -1) {
       maxNums = [-1, -1];
     }
-    return maxNums;
+
+    return maxNums.sort((a, b) => b - a);
   };
   private pair = (cards: Card[]): number => {
     let maxNum = -1;

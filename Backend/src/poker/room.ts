@@ -9,8 +9,19 @@ export default class Room {
     this.game = new Poker(bigBlind, this.players);
     this.rotateBlinds();
   };
+
   rotateBlinds = () => {
     const first = this.players.shift();
     this.players = [...this.players, first];
+  };
+
+  checkPlayersMoney = (): Player[] => {
+    let continuers = [];
+    this.players.forEach((player) => {
+      if (player.money >= 200) {
+        continuers = [...continuers, player];
+      }
+    });
+    return continuers;
   };
 }

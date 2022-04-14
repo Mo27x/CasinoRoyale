@@ -113,10 +113,6 @@ createConnection()
       });
     });
 
-    app.get("/ask", (req, res) => {
-      res.sendFile(path.join(__dirname, "./public", "ask.html"));
-    });
-
     app.post("/friendship", async (req, res) => {
       let user = await userRepository.findOne({ username: req.body.me });
       let other = await userRepository.findOne({ username: req.body.other });
@@ -350,12 +346,16 @@ createConnection()
       socket.on("check", (id) => {
         let room = getRoomById(getPlayerById(socket.id).roomId);
         room.game.check(room.game.players[id]);
-        io.emit("cards", JSON.stringify(room.game.cards));
-        io.emit("players", room.players);
-        if (room.game.rounds == 5) {
+        if (!room.game.end) {
+          io.emit("cards", JSON.stringify(room.game.cards));
+          io.emit("players", room.players);
+          if (room.game.rounds == 5) {
+            io.emit("winners", JSON.stringify(room.game.winners));
+          }
+          io.emit("currentPlayer", room.game.currentPlayer);
+        } else {
           io.emit("winners", JSON.stringify(room.game.winners));
         }
-        io.emit("currentPlayer", room.game.currentPlayer);
       });
 
       socket.on("call", (id: number) => {
