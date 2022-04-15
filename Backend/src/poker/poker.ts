@@ -81,7 +81,6 @@ export default class Poker {
       } else {
         player.allIn = true;
         // player in pot 0?
-        // check if game ended
         if (this.getActivePlayers().length > 1) {
           this.pots[this.potNum] += player.money;
           this.actualBet = player.money;
@@ -188,11 +187,13 @@ export default class Poker {
       if (this.getActivePlayers().length > 1) {
         player.hasFolded = true;
         this.nextPlayer(player);
-        if (this.getActivePlayers().length == 1) {
-          this.firstBetter = this.getActivePlayers()[0];
-          while (this.rounds < 5) {
-            this.nextPlayer(player);
-          }
+        if (player == this.firstBetter) {
+          this.firstBetter = this.currentPlayer;
+        }
+      } else if (this.getActivePlayers().length == 1) {
+        this.firstBetter = this.getActivePlayers()[0];
+        while (this.rounds < 5) {
+          this.nextPlayer(player);
         }
       }
     }
@@ -216,7 +217,8 @@ export default class Poker {
     this.end = true;
   };
 
-  round = (player: Player) => {
+  round = () => {
+    console.log(this.currentPlayer.username, this.firstBetter.username);
     if (this.currentPlayer == this.firstBetter) {
       this.canCheck = true;
       this.rounds++;
@@ -238,18 +240,18 @@ export default class Poker {
     for (let i = j; i < this.players.length; i++) {
       if (this.isActive(this.players[i])) {
         this.currentPlayer = this.players[i];
-        this.round(player);
+        this.round();
         return this.players[i];
       }
     }
     for (let i = 0; i < j - 1; i++) {
       if (this.isActive(this.players[i])) {
         this.currentPlayer = this.players[i];
-        this.round(player);
+        this.round();
         return this.players[i];
       }
     }
-    this.round(player);
+    this.round();
     return player;
   };
 
