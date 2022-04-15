@@ -218,7 +218,6 @@ export default class Poker {
   };
 
   round = () => {
-    console.log(this.currentPlayer.username, this.firstBetter.username);
     if (this.currentPlayer == this.firstBetter) {
       this.canCheck = true;
       this.rounds++;
