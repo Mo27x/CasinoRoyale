@@ -11,7 +11,6 @@ import jwt from "jsonwebtoken";
 import path from "path";
 import { createHash } from "crypto";
 import { body, validationResult, CustomValidator } from "express-validator";
-import Poker from "./poker/poker";
 import Player from "./poker/player";
 import cookieParser from "cookie-parser";
 import { Token } from "./entity/Token";
@@ -328,6 +327,7 @@ createConnection()
           let room = getRoomById(roomId);
           socket.join(roomId);
           room.players = [...room.players, player];
+          players = [...players, player];
           const play = {
             username: player.username,
             money: player.money,
@@ -335,8 +335,8 @@ createConnection()
           };
           io.to(socket.id).emit("player", play);
           io.to(socket.id).emit("id", room.players.indexOf(player));
-          // this is shit, I mean '> 1'
-          if (io.sockets.adapter.rooms.get(getRoomById(roomId).id).size > 1) {
+          // gotta change == 2
+          if (io.sockets.adapter.rooms.get(getRoomById(roomId).id).size == 2) {
             room.startGame(200);
             io.emit("currentPlayer", room.game.currentPlayer);
             io.emit("players", room.players);
@@ -363,7 +363,7 @@ createConnection()
         room.game.call(room.game.players[id]);
         io.emit("cards", JSON.stringify(room.game.cards));
         io.emit("players", room.players);
-        if (room.game.rounds == 5) {
+        if (room.game.end) {
           io.emit("winners", JSON.stringify(room.game.winners));
         }
         io.emit("currentPlayer", room.game.currentPlayer);
@@ -390,7 +390,7 @@ createConnection()
         room.game.fold(room.game.players[id]);
         io.emit("cards", JSON.stringify(room.game.cards));
         io.emit("players", room.players);
-        if (room.game.rounds == 5) {
+        if (room.game.end) {
           io.emit("winners", JSON.stringify(room.game.winners));
         }
         io.emit("currentPlayer", room.game.currentPlayer);
@@ -437,7 +437,6 @@ createConnection()
     const isPlayer = (username: string): boolean => {
       for (let i = 0; i < players.length; i++) {
         if (username == players[i].username) {
-          console.log(username, players[i].username, i);
           return true;
         }
       }

@@ -60,12 +60,15 @@
   });
 
   socket.on("players", (inPlayers) => {
-    console.log(inPlayers);
     players = inPlayers;
   });
 
   socket.on("player", (inPlayer) => {
     player = inPlayer;
+  });
+
+  socket.on("id", (inId) => {
+    id = inId;
   });
 
   const fetchUser = (async () => {

@@ -11,13 +11,14 @@ export default class Player {
 
   public constructor(
     public readonly username: string,
-    public money: number
-  ) // public id: string,
-  // public roomId: string
-  {
+    public money: number,
+    public id: string,
+    public roomId: string
+  ) {
     this.hasFolded = false;
     this.hand = new Hand();
     this.pots = -1;
     this.bet = 0;
+    this.allIn = false;
   }
 }
