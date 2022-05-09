@@ -118,7 +118,8 @@ createConnection()
       let friendship = new Friendship();
       friendship.asker = user;
       friendship.answerer = other;
-      friendship.friended = false;
+      friendship.isFriended = false;
+      friendship.isBlocked = false;
       friendshipRepository.save(friendship);
       res.send("friended with" + other.username);
     });
