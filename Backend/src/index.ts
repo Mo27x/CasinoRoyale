@@ -115,13 +115,30 @@ createConnection()
     app.post("/friendship", async (req, res) => {
       let user = await userRepository.findOne({ username: req.body.me });
       let other = await userRepository.findOne({ username: req.body.other });
-      let friendship = new Friendship();
-      friendship.asker = user;
-      friendship.answerer = other;
-      friendship.isFriended = false;
-      friendship.isBlocked = false;
-      friendshipRepository.save(friendship);
-      res.send("friended with" + other.username);
+      if (friendshipRepository.findOne({ asker: other, answerer: user })) {
+        res.send("friended with" + other.username);
+      } else if (
+        friendshipRepository.findOne({ asker: user, answerer: other })
+      ) {
+        res.send("Already requested friendship to" + other.username);
+      }
+      {
+        if (
+          !(
+            await friendshipRepository.findOne({ asker: user, answerer: other })
+          ).isBlocked
+        ) {
+          let friendship = new Friendship();
+          friendship.asker = user;
+          friendship.answerer = other;
+          friendship.areFriended = false;
+          friendship.isBlocked = false;
+          friendshipRepository.save(friendship);
+          res.send("requested friendship to" + other.username);
+        } else {
+          res.send(other.username + " blocked you");
+        }
+      }
     });
 
     app.get("/data", authorization, async (req: PlayerAuthInfoRequest, res) => {
@@ -345,6 +362,7 @@ createConnection()
         }
       });
       socket.on("check", (id) => {
+        let player = getPlayerById(socket.id);
         let room = getRoomById(getPlayerById(socket.id).roomId);
         room.game.check(room.game.players[id]);
         if (!room.game.end) {

@@ -29,7 +29,7 @@ export class User {
   @OneToMany(() => Friendship, (Friendship) => Friendship.asker)
   requests: Friendship[];
 
-  @OneToMany(() => Friendship, (Friendship) => Friendship.asker)
+  @OneToMany(() => Friendship, (Friendship) => Friendship.answerer)
   responses: Friendship[];
 
   @OneToMany(() => Token, (token) => token.user)

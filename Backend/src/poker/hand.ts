@@ -24,7 +24,7 @@ export default class Hand {
     funRet = this.straight(aCards);
     if (funRet != -1) return [5, funRet];
 
-    funRet = this.fourOfAKind(aCards);
+    funRet = this.threeOfAKind(aCards);
     if (funRet != -1) return [4, funRet];
 
     funRet = this.twoPair(aCards);

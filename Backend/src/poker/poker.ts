@@ -143,10 +143,11 @@ export default class Poker {
       !this.canCheck &&
       money > 2 * this.actualBet
     ) {
-      if (player.money > money) {
+      if (player.money >= money) {
         this.pots[this.potNum] += money;
         player.money -= money;
         this.actualBet = money;
+        this.firstBetter = player;
         player.bet += money;
         if (player.pots < 0) {
           player.pots = 0;
@@ -156,13 +157,6 @@ export default class Poker {
         player.bet += player.money;
         player.money = 0;
         player.allIn = true;
-        if (player.money == money) {
-          this.firstBetter = player;
-          this.actualBet = money;
-          if (player.pots < 0) {
-            player.pots = 0;
-          }
-        }
         // player in pot 0 if player.money < money?
         this.potNum++;
         this.getActivePlayers().forEach((activePlayer) => {
