@@ -100,18 +100,6 @@ createConnection()
       });
     };
 
-    // app.get("*", (req: PlayerAuthInfoRequest, res) => {
-    //   res.sendFile("index.html", {
-    //     root: path.join(path.join(__dirname, "../../Frontend/public/")),
-    //   });
-    // });
-
-    app.get("/", (req: PlayerAuthInfoRequest, res) => {
-      res.sendFile("index.html", {
-        root: path.join(path.join(__dirname, "../../Frontend/public/")),
-      });
-    });
-
     app.post("/friendship", async (req, res) => {
       let user = await userRepository.findOne({ username: req.body.me });
       let other = await userRepository.findOne({ username: req.body.other });
@@ -141,17 +129,67 @@ createConnection()
       }
     });
 
-    app.get("/data", authorization, async (req: PlayerAuthInfoRequest, res) => {
-      let player = await userRepository.findOne({
-        username: req.playerUsername,
-      });
-      if (player) {
-        res.json({ username: player.username, money: player.money });
+    app.get(
+      "/api/user/isLoggedIn",
+      authorization,
+      async (req: PlayerAuthInfoRequest, res) => {
+        let user = await userRepository.findOne({
+          username: req.playerUsername,
+        });
+        if (user) {
+          res.json({
+            isLoggedIn: true,
+          });
+        }
       }
-    });
+    );
+    app.get(
+      "/api/user/getUser",
+      authorization,
+      async (req: PlayerAuthInfoRequest, res) => {
+        let user = await userRepository.findOne({
+          username: req.playerUsername,
+        });
+        if (user) {
+          let friendships = await friendshipRepository.find({
+            asker: user,
+            areFriended: true,
+          });
+          friendships = friendships.concat(
+            await friendshipRepository.find({
+              answerer: user,
+              areFriended: true,
+            })
+          );
+          // map friends to usernames
+          let friends = friendships.map((friendship) => {
+            return friendship.answerer.username;
+          });
+          let blocked = await friendshipRepository.find({
+            asker: user,
+            isBlocked: true,
+          });
+          blocked = blocked.concat(
+            await friendshipRepository.find({
+              answerer: user,
+              isBlocked: true,
+            })
+          );
+          res.json({
+            isLoggedIn: true,
+            user: {
+              username: user.username,
+              email: user.email,
+              friends: friends,
+              money: user.money,
+            },
+          });
+        }
+      }
+    );
 
     app.get(
-      "/logout",
+      "/api/user/logout",
       authorization,
       async (req: PlayerAuthInfoRequest, res) => {
         let player = await userRepository.findOne({
@@ -229,54 +267,48 @@ createConnection()
           res.status(400).json({ errors: errors.array() });
         } else {
           if (typeof req.body != "undefined") {
-            let player = await userRepository.findOne({
+            let user = await userRepository.findOne({
               email: req.body.email,
             });
-            if (player) {
+            if (user) {
               req.body.password = createHash("sha256")
                 .update(req.body.password)
                 .digest("hex");
-              player = await userRepository.findOne({
+              user = await userRepository.findOne({
                 email: req.body.email,
                 password: req.body.password,
               });
-              if (player) {
-                const token = jwt.sign(
-                  { username: player.username },
-                  "casino",
-                  { expiresIn: "24h" }
-                );
+              if (user) {
+                const token = jwt.sign({ username: user.username }, "casino", {
+                  expiresIn: "24h",
+                });
                 let tokenToSave = new Token();
                 tokenToSave.token = token;
-                tokenToSave.user = player;
+                tokenToSave.user = user;
                 tokenToSave.expiresOn = new Date(
                   new Date().setHours(new Date().getHours() + 23)
                 );
                 await tokenRepository.save(tokenToSave);
-                player.tokens = [tokenToSave];
-                await userRepository.save(player);
-                return res
-                  .cookie("access_token", token, {
-                    expires: new Date(Date.now() + 30 * 24 * 3600000),
-                    httpOnly: true,
-                    secure: true,
-                  })
-                  .status(200)
-                  .sendFile("index.html", {
-                    root: path.join(
-                      path.join(__dirname, "../../Frontend/public/")
-                    ),
-                  });
+                user.tokens = [tokenToSave];
+                await userRepository.save(user);
+                res.cookie("access_token", token, {
+                  expires: new Date(Date.now() + 30 * 24 * 3600000),
+                  maxAge: 30 * 24 * 3600000,
+                  httpOnly: true,
+                  secure: true,
+                });
+                res.status(200);
+                res.json({ success: true });
               }
             }
           } else {
-            res.status(404);
+            res.status(405).json({ success: false, message: "No body" });
           }
         }
       }
     );
     app.post(
-      "/api/register",
+      "/api/signup",
       body("username").not().isEmpty().trim().escape().custom(isValidUsername),
       body("email").isEmail().normalizeEmail().custom(isValidEmail),
       body("password")
@@ -298,7 +330,7 @@ createConnection()
         if (!errors.isEmpty()) {
           res.status(400).json({ errors: errors.array() });
         } else {
-          let player = new User();
+          let user = new User();
           req.body.password = createHash("sha256")
             .update(req.body.password)
             .digest("hex");
@@ -310,25 +342,29 @@ createConnection()
               email: req.body.email,
             });
             if (!uPlayer && !ePlayer) {
-              player.username = req.body.username;
-              player.email = req.body.email;
-              player.password = req.body.password;
-              player.money = 20000;
-              player.requests = [];
-              player.responses = [];
-              userRepository.save(player);
+              user.username = req.body.username;
+              user.email = req.body.email;
+              user.password = req.body.password;
+              user.money = 20000;
+              user.requests = [];
+              user.responses = [];
+              userRepository.save(user);
             } else {
               return res.send("Email or Username already exists");
             }
           } else {
             return res.status(404);
           }
-          res.sendFile("index.html", {
-            root: path.join(path.join(__dirname, "../../Frontend/public/")),
-          });
+          res.status(200).json({ success: true });
         }
       }
     );
+
+    app.get("/*", (req: PlayerAuthInfoRequest, res) => {
+      res.sendFile("index.html", {
+        root: path.join(path.join(__dirname, "../../Frontend/public/")),
+      });
+    });
 
     io.on("connection", (socket) => {
       console.log("a user connected");
@@ -343,6 +379,7 @@ createConnection()
           const roomId = getRoom();
           let player = new Player(user.username, user.money, socket.id, roomId);
           let room = getRoomById(roomId);
+          // check if user from database has enough money to play
           socket.join(roomId);
           room.players = [...room.players, player];
           players = [...players, player];
@@ -361,10 +398,14 @@ createConnection()
           }
         }
       });
-      socket.on("check", (id) => {
+      socket.on("check", (id: number) => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(getPlayerById(socket.id).roomId);
-        room.game.check(room.game.players[id]);
+
+        // to test
+        // room.game.check(room.game.players[id]);
+        // room.game.check(player);
+        room.game.check(room.game.players[room.game.players.indexOf(player)]);
         if (!room.game.end) {
           io.emit("cards", JSON.stringify(room.game.cards));
           io.emit("players", room.players);

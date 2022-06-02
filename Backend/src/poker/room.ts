@@ -15,7 +15,7 @@ export default class Room {
     this.players = [...this.players, first];
   };
 
-  checkPlayersMoney = (): Player[] => {
+  getPlayers = (): Player[] => {
     let continuers = [];
     this.players.forEach((player) => {
       if (player.money >= 200) {

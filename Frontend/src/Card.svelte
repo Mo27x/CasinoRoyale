@@ -1,58 +1,82 @@
 <script lang="ts">
   export let suit: string = "";
-  export let num: number | string = -1;
+  export let num: string | number = -1;
   export let color: string = "";
 </script>
 
 {#if suit != "" && num != -1}
   <div class="card {color}">
-    <h1>{num}</h1>
-    <p class="figures">{@html suit}</p>
-    <h1>{num}</h1>
+    <div class="card-inner">
+      <div class="top-left">
+        <div>{num}</div>
+        <div>{@html suit}</div>
+      </div>
+      <div class="center">{@html suit}</div>
+      <div class="bottom-right">
+        <div>{num}</div>
+        <div>{@html suit}</div>
+      </div>
+    </div>
   </div>
+{:else}
+  <div class="card stripes" />
 {/if}
 
 <style>
-  .red {
-    color: #ec6e69;
+  .card {
+    position: relative;
+    display: inline-block;
+    width: 2.4rem;
+    height: 3rem;
+    font-size: 7.5pt;
+    background: #ffffff;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    border: 0.2rem solid #ffffff;
+    border-radius: 0.2rem;
   }
-  .black {
-    color: #515260;
+  .card-inner {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-rows: 1fr;
+    gap: 0em 0em;
+    grid-auto-flow: row;
+    width: 100%;
+    height: 100%;
   }
 
-  .card {
-    height: 70px;
-    width: 50px;
-    border-radius: 5px;
-    display: inline-block;
-    position: relative;
-    background-color: white;
-    font-family: "Houschka Rounded";
+  .top-left {
+    grid-area: 1/1/2/2;
   }
-  .card h1 {
-    font-size: 10px;
-    text-align: center;
-    position: absolute;
-    margin: 0, 5rem;
+
+  .bottom-right {
+    grid-area: 1/3/2/4;
+    transform: rotate(180deg);
   }
-  .figures {
-    width: 20px;
-    height: 20px;
-    position: absolute;
-    top: 10%;
-    left: 43%;
-    transform: translateX(-50%) translateY(-50%);
-    margin-top: 15%;
-    text-align: center;
-    font-size: 3em;
+
+  .center {
+    display: grid;
+    place-items: center;
+    grid-area: 1/2/2/3;
+    font-size: 24pt;
   }
-  div > h1:first-child {
-    top: 5px;
-    left: 5px;
+
+  .red {
+    color: #ff0000;
   }
-  div > h1:last-child {
-    bottom: 5px;
-    right: 5px;
-    transform: rotatez(180deg);
+
+  .black {
+    color: #000000;
+  }
+  .stripes {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      #8b89ff 0rem,
+      #8b89ff 0.2rem,
+      #6765ff 0.2rem,
+      #6765ff 0.4rem
+    );
   }
 </style>

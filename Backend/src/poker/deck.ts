@@ -67,15 +67,11 @@ export default class Deck {
     if (numCards > 0 && numCards <= this.cards.length) {
       let ret: Card[] = [];
       for (let i = 0; i < numCards; i++) {
-        ret[i] = this.cards[i];
-        if (i > -1) {
-          this.cards.splice(i, 1);
-        }
+        ret = [...ret, this.cards.shift()];
       }
       return ret;
     }
   };
-
   public shuffle = () => {
     for (let i = 0; i < this.cards.length; i++) {
       const j = this.randNum(this.cards.length - 1);

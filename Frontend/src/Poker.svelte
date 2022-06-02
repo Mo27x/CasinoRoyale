@@ -1,262 +1,238 @@
 <script lang="ts">
-  import Card from "./Card.svelte";
-  import Player from "./Player.svelte";
-  export let socket;
-  let cards = [];
-  let id: number = -1;
-  let playerCards = [];
-  let currentPlayer = {};
-  let player;
-  let players = [];
+  import Table from "./Table.svelte";
 
-  function send(play: string) {
-    socket.emit(play, id);
-  }
-
-  const game = (user: {}) => {
-    socket.emit("game", user);
-  };
-
-  const changeValues = (card): void => {
-    if (card.num == 1) card.num = "A";
-    if (card.num == 11) card.num = "J";
-    if (card.num == 12) card.num = "Q";
-    if (card.num == 13) card.num = "K";
-  };
-
-  const getColor = (card) => {
-    if (card.suit == "spadesuit" || card.suit == "clubsuit") {
-      card.color = "black";
-    }
-    if (card.suit == "diamondsuit" || card.suit == "heartsuit") {
-      card.color = "red";
+  const progress = () => {
+    let time = (<HTMLProgressElement>document.getElementById("time")).value;
+    if (time <= 0) {
+      clearInterval(interval);
+    } else {
+      (<HTMLProgressElement>document.getElementById("time")).value -= 1;
+      if ((<HTMLProgressElement>document.getElementById("time")).value <= 5) {
+        (<HTMLProgressElement>(
+          document.getElementById("time")
+        )).style.accentColor = "#973838";
+      }
     }
   };
 
-  socket.on("cards", (card) => {
-    cards = JSON.parse(card);
-    for (let i = 0; i < cards.length; i++) {
-      changeValues(cards[i]);
-      getColor(cards[i]);
-      cards[i].suit = "&" + cards[i].suit + ";";
-    }
-  });
+  let interval = setInterval(progress, 1000);
 
-  socket.on("playerCards", (card) => {
-    playerCards = JSON.parse(card);
-    for (let i = 0; i < playerCards.length; i++) {
-      changeValues(playerCards[i]);
-      getColor(playerCards[i]);
-      playerCards[i].suit = "&" + playerCards[i].suit + ";";
-    }
-  });
+  let bet = { min: 200, max: 1000 };
+  let raise = { min: 200, max: 1000 };
 
-  socket.on("winners", (winners) => {
-    console.log(winners);
-  });
+  let plays = ["Check", "Bet"];
+  let play = "";
+  let money = 500;
 
-  socket.on("currentPlayer", (player) => {
-    currentPlayer = player;
-  });
+  const changePlay = (passedPay: string) => {
+    play = passedPay;
+  };
 
-  socket.on("players", (inPlayers) => {
-    players = inPlayers;
-  });
-
-  socket.on("player", (inPlayer) => {
-    player = inPlayer;
-  });
-
-  socket.on("id", (inId) => {
-    id = inId;
-  });
-
-  const fetchUser = (async () => {
-    const res = await fetch("http://localhost:3000/data");
-    return res.json();
-  })();
+  const changeAmount = (amount: number) => {
+    money = amount;
+  };
 </script>
 
-{#await fetchUser then user}
-  {#if typeof user != "undefined"}
-    {console.debug("user")}
-    {game(user)}
-  {/if}
-{/await}
-
-<div class="main">
+<div class="container">
   <div class="table">
-    <div class="card-place">
-      {#if cards != []}
-        {#each cards as card}
-          <svelte:component this={Card} {...card} />
-        {/each}
-      {/if}
+    <Table />
+  </div>
+  <div class="center">
+    <div class="progress">
+      <progress id="time" max="20" value="20" />
     </div>
   </div>
-  {#if playerCards != []}
-    {#each playerCards as card}
-      <svelte:component this={Card} {...card} />
-    {/each}
-  {/if}
-  {#if players != []}
-    {#each players as recievedPlayer, i}
-      {#if recievedPlayer.username != player.username}
-        {#if i != 1}
-          <div class="player player{i}">
-            <svelte:component this={Player} {...recievedPlayer} />
+  <div class="center">
+    <div class="buttons">
+      {#if play == ""}
+        <div class="space-evenly">
+          <button class="play">{plays[0]}</button>
+          <button class="play" on:click={() => changePlay("bet")}
+            >{plays[1]}</button
+          >
+          <button class="play fold">Fold</button>
+        </div>
+      {:else if play == "bet"}
+        <div class="detailed">
+          <div class="left">
+            <div class="top">Your {play}</div>
+            <div class="bottom">{money}</div>
           </div>
-        {/if}
-      {:else}
-        <div class="player player1">
-          <svelte:component this={Player} {...recievedPlayer} />
+
+          <div class="center">
+            <div class="space-between top">
+              <button on:click={() => changeAmount(200)}>Min</button>
+              <button on:click={() => changeAmount(1000)}>All-In</button>
+            </div>
+            <div class="center bottom">
+              <input
+                type="range"
+                name="money"
+                id="money"
+                min="200"
+                max="1000"
+                step="50"
+                bind:value={money}
+              />
+            </div>
+          </div>
+          <div class="right">
+            <div class="top center"><button>{plays[1]}</button></div>
+            <div class="bottom center">
+              <button class="cancel" on:click={() => changePlay("")}
+                >Cancel</button
+              >
+            </div>
+          </div>
         </div>
       {/if}
-    {/each}
-  {/if}
-  <!-- {#if currentPlayer != []}
-    <div class=" player player2">
-      CurrentPlayer: <svelte:component this={Player} {...currentPlayer} />
     </div>
-  {/if} -->
-  <div class="buttons">
-    <button on:click={() => send("check")}>Check</button>
-    <button on:click={() => send("bet")}>Bet</button>
-    <button on:click={() => send("fold")}>Fold</button>
-    <button on:click={() => send("raise")}>Raise</button>
-    <button on:click={() => send("call")}>Call</button>
-    <button on:click={() => send("playerCards")}>cards</button>
   </div>
 </div>
 
 <style>
-  /* .main {
+  .container {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr min-content min-content;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    height: 100%;
+    width: 100%;
+  }
+
+  .table {
+    grid-area: 1 / 1 / 2 / 2;
+    width: 100%;
+    height: 100%;
     display: grid;
     place-items: center;
-    grid-auto-columns: 1fr;
-    grid-template-columns:
-      minmax(min-content, 8.5rem) minmax(min-content, 8.5rem) minmax(
-        min-content,
-        8.5rem
-      )
-      minmax(min-content, 8.5rem) minmax(min-content, 8.5rem);
-    grid-template-rows:
-      0.3fr minmax(min-content, 8.5rem) 1.3fr 1.3fr minmax(min-content, 8.5rem)
-      0.5fr;
-    gap: 0px 0px;
-    grid-template-areas:
-      ". . . . ."
-      ". . . . ."
-      ". . . . ."
-      ". . . . ."
-      ". . . . .";
-    grid-area: 2/2/3/3;
-  } */
-  .table {
-    grid-area: 3/2/5/5;
-    width: 1000px;
-    height: 390px;
-    background-color: #2b8b60;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translateX(-50%) translateY(-50%);
-    border-radius: 150px;
-    position: relative;
-    border: 15px solid #212022;
   }
 
-  .table:before {
-    content: "";
-    border: 7px solid rgba(0, 0, 0, 0.1);
-    display: block;
-    width: 1015px;
-    height: 405px;
-    border-radius: 150px;
-    position: absolute;
-    top: -15px;
-    left: -15px;
-  }
-  .table:after {
-    content: "";
-    border: 7px solid rgba(0, 0, 0, 0.1);
-    display: block;
-    width: 985px;
-    height: 375px;
-    border-radius: 130px;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-  .card-place {
-    border: 5px solid #3ca576;
-    height: 100px;
-    width: 400px;
-    position: absolute;
-    border-radius: 10px;
-    padding: 10px;
-    top: 50%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-50%);
-    box-sizing: border-box;
-  }
-  .player {
-    border: 0.2rem solid #ededed;
-  }
-
-  .player0 {
-    grid-area: 5/4/6/5;
-  }
-  .player1 {
-    grid-area: 5/3/6/4;
-  }
-  .player2 {
-    grid-area: 5/2/6/3;
-  }
-  .player3 {
-    grid-area: 4/1/5/2;
-  }
-  .player4 {
-    grid-area: 3/1/4/2;
-  }
-  .player5 {
-    grid-area: 2/2/3/3;
-  }
-  .player6 {
-    grid-area: 2/3/3/4;
-  }
-  .player7 {
-    grid-area: 2/4/3/5;
-  }
-  .player8 {
-    grid-area: 3/5/4/6;
-  }
-  .player9 {
-    grid-area: 4/5/5/6;
+  .progress {
+    grid-area: 2 / 1 / 3 / 2;
   }
 
   .buttons {
-    grid-area: 6/2/7/5;
-    height: 100%;
+    grid-area: 3 / 1 / 4 / 2;
+  }
+
+  .center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: min-content;
+  }
+  .progress {
+    width: 98%;
+  }
+  #time {
+    accent-color: palegreen;
     width: 100%;
-    text-align: center;
-    background-color: #da0037;
   }
+  .buttons {
+    width: 98%;
+  }
+  .space-evenly {
+    display: flex;
+    justify-content: space-evenly;
+  }
+
+  .space-between {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .detailed {
+    display: grid;
+    grid-template-columns: max-content 1fr max-content;
+    grid-template-rows: 1fr 1fr;
+    gap: 0rem 0.2rem;
+    grid-auto-flow: row;
+  }
+
+  .detailed > .left {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    grid-area: 1 / 1 / 3 / 2;
+  }
+
+  .left > .top {
+    grid-area: 1 / 1 / 2 / 2;
+    display: grid;
+    place-items: center;
+  }
+
+  .left > .bottom {
+    background-color: #5a5867;
+    border-radius: 0.4rem;
+    grid-area: 2 / 1 / 3 / 2;
+    display: grid;
+    place-items: center;
+  }
+
+  .detailed > .center {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    grid-area: 1 / 2 / 3 / 3;
+  }
+  .center > .top {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+
+  .center > .bottom {
+    grid-area: 2 / 1 / 3 / 2;
+    display: flex;
+    align-items: baseline;
+  }
+
+  .detailed > .right {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0.2rem 0rem;
+    grid-auto-flow: row;
+    grid-area: 1 / 3 / 3 / 4;
+  }
+  .right > .top {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+
+  .right > .bottom {
+    grid-area: 2 / 1 / 3 / 2;
+  }
+
+  input[type="range"] {
+    accent-color: #ffae82;
+    width: 95%;
+  }
+
   button {
+    border: none;
+    background: none;
+    color: #eeeeee;
+    font-size: 12pt;
     height: 2rem;
-    width: 5rem;
-    background-color: #2b8b60;
-    border-radius: 0.3rem;
+    background-color: #5a5867;
+    border-radius: 0.5rem;
   }
-  .stripes {
-    border: 0.3rem solid #ffffff;
-    border-radius: 0.3rem;
-    background-image: repeating-linear-gradient(
-      -45deg,
-      #8b89ff 0rem,
-      #8b89ff 0.3rem,
-      #6765ff 0.3rem,
-      #6765ff 0.6rem
-    );
+
+  .play {
+    width: 6rem;
+  }
+  .cancel {
+    background: none;
+    border: 0.2rem solid #5a5867;
+  }
+  .fold {
+    background: none;
+    border: 0.2rem solid #973838;
+    color: #973838;
   }
 </style>
