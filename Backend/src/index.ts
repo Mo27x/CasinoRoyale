@@ -200,7 +200,7 @@ createConnection()
         return res
           .clearCookie("access_token")
           .status(200)
-          .json({ message: "Successfully logged out" });
+          .json({ success: true });
       }
     );
 
@@ -291,14 +291,16 @@ createConnection()
                 await tokenRepository.save(tokenToSave);
                 user.tokens = [tokenToSave];
                 await userRepository.save(user);
-                res.cookie("access_token", token, {
-                  expires: new Date(Date.now() + 30 * 24 * 3600000),
-                  maxAge: 30 * 24 * 3600000,
-                  httpOnly: true,
-                  secure: true,
-                });
-                res.status(200);
-                res.json({ success: true });
+                res.header("Access-Control-Allow-Origin", req.headers.origin);
+                res
+                  .cookie("access_token", token, {
+                    expires: new Date(Date.now() + 30 * 24 * 3600000),
+                    maxAge: 30 * 24 * 3600000,
+                    httpOnly: false,
+                    // secure: true,
+                  })
+                  .status(200)
+                  .json({ success: true });
               }
             }
           } else {

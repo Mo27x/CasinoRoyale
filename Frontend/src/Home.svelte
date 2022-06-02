@@ -23,15 +23,16 @@
   let blackjackMoney = user.money / 2;
   let tradeMoney = user.money / 2;
 
-  // send login data to server
   const login = async () => {
     let response = await fetch("/api/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
+        Accpept: "application/json",
       },
-      credentials: "include",
+      mode: "same-origin",
+      redirect: "follow",
+      credentials: "same-origin",
       body: JSON.stringify(loginData),
     });
     let data = await response.json();
@@ -42,15 +43,12 @@
     }
   };
 
-  // send sign up data to server
   const signUp = async () => {
     let response = await fetch("/api/signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
       },
-      credentials: "include",
       body: JSON.stringify(signUpData),
     });
     let data = await response.json();
@@ -60,7 +58,6 @@
       alert(data.message);
     }
   };
-  console.log(isLogged);
 </script>
 
 {#if !isLogged}

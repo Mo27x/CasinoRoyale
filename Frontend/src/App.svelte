@@ -50,7 +50,7 @@
     if (data.success) {
       isLogged = false;
       user = {};
-      change("home");
+      window.location.href = "/";
     }
   };
   fetchData();
@@ -106,7 +106,7 @@
             <img src="./icons/settings.svg" alt="" class="icon" />
           </Link>
         </div>
-        <div id="logout" class="nav-item" on:click={logout}>
+        <div id="logout" class="nav-item" on:click={() => logout()}>
           <img src="./icons/logout.svg" alt="" class="icon" />
         </div>
       </Router>
