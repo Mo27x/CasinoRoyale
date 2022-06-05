@@ -19,8 +19,7 @@
     document.getElementById(id).classList.add("selected");
     selected = options[index];
   };
-
-  export let friends = [];
+  export let user: any = {};
 </script>
 
 <div class="container">
@@ -40,7 +39,7 @@
     </div>
   </div>
   <div class="content-area">
-    <svelte:component this={selected.component} {friends} />
+    <svelte:component this={selected.component} {user} />
   </div>
 </div>
 

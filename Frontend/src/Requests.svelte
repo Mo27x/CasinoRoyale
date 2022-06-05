@@ -1,19 +1,53 @@
 <script lang="ts">
-  export let friends;
+  export let user: any = {};
+  const accept = async (friend: string) => {
+    let response = await fetch("/acceptFriendship", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ me: user.username, friend: friend }),
+    });
+    let data = await response.json();
+    console.log(data);
+  };
+  const refuseFriendship = async (friend: string) => {
+    const response = await fetch("/deleteFriendship", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ me: user.username, friend: friend }),
+    });
+    const data = await response.json();
+    console.log(data);
+  };
+
+  const blockFriendship = async (friend: string) => {
+    const response = await fetch("/blockFriendship", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ me: user.username, friend: friend }),
+    });
+    const data = await response.json();
+    console.log(data);
+  };
 </script>
 
 <div class="content requests">
-  {#each friends as friend}
+  {#each user.responses as friend}
     <div class="center">
       <div class="user">
-        <div class="name-box"><div class="name">{friend}</div></div>
-        <div class="accept">
+        <div class="name-box"><div class="name">{friend.username}</div></div>
+        <div class="accept" on:click={() => accept(friend.username)}>
           <img src="./icons/accept.svg" alt="Accept" class="icon" />
         </div>
-        <div class="refuse">
+        <div class="refuse" on:click={() => refuseFriendship(friend.username)}>
           <img src="./icons/refuse.svg" alt="Refuse" class="icon" />
         </div>
-        <div class="block">
+        <div class="block" on:click={() => blockFriendship(friend.username)}>
           <img src="./icons/block.svg" alt="Block" class="icon" />
         </div>
       </div>

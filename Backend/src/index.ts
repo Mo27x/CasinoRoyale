@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { createConnection } from "typeorm";
+import { createConnection, Like } from "typeorm";
 import express from "express";
 import * as bodyParser from "body-parser";
 import { Request, Response } from "express";
@@ -100,33 +100,132 @@ createConnection()
       });
     };
 
-    app.post("/friendship", async (req, res) => {
-      let user = await userRepository.findOne({ username: req.body.me });
-      let other = await userRepository.findOne({ username: req.body.other });
-      if (friendshipRepository.findOne({ asker: other, answerer: user })) {
-        res.send("friended with" + other.username);
-      } else if (
-        friendshipRepository.findOne({ asker: user, answerer: other })
-      ) {
-        res.send("Already requested friendship to" + other.username);
-      }
-      {
-        if (
-          !(
-            await friendshipRepository.findOne({ asker: user, answerer: other })
-          ).isBlocked
-        ) {
-          let friendship = new Friendship();
-          friendship.asker = user;
-          friendship.answerer = other;
-          friendship.areFriended = false;
-          friendship.isBlocked = false;
-          friendshipRepository.save(friendship);
-          res.send("requested friendship to" + other.username);
+    app.post("/requestFriendship", async (req, res) => {
+      let me = await userRepository.findOne({ username: req.body.me });
+      let friend = await userRepository.findOne({ username: req.body.friend });
+      if (me && friend) {
+        let request = await friendshipRepository.findOne({
+          asker: me,
+          answerer: friend,
+        });
+        let response = await friendshipRepository.findOne({
+          asker: friend,
+          answerer: me,
+        });
+        if (!request) {
+          if (!response) {
+            let friendship = new Friendship();
+            friendship.asker = me;
+            friendship.answerer = friend;
+            friendship.areFriended = false;
+            friendship.isBlocked = false;
+            await friendshipRepository.save(friendship);
+            return res.json({
+              message: "you asked friendship to " + friend.username,
+            });
+          } else {
+            return res.json({
+              message: friend.username + " already asked you friendships",
+            });
+          }
         } else {
-          res.send(other.username + " blocked you");
+          if (!request.isBlocked) {
+            return res.json({
+              message: "you already asked friendship to " + friend.username,
+            });
+          } else {
+            return res.json({ message: friend.username + " blocked you" });
+          }
         }
       }
+      res.json({ message: "users not found" });
+    });
+
+    app.post("/acceptFriendship", async (req, res) => {
+      let me = await userRepository.findOne({ username: req.body.me });
+      let friend = await userRepository.findOne({ username: req.body.friend });
+      if (me && friend) {
+        let request = await friendshipRepository.findOne({
+          relations: ["answerer", "asker"],
+          where: { asker: me, answerer: friend },
+        });
+        let response = await friendshipRepository.findOne({
+          relations: ["answerer", "asker"],
+          where: { asker: friend, answerer: me },
+        });
+        if (response) {
+          if (!response.isBlocked) {
+            if (!request) {
+              response.areFriended = true;
+              await friendshipRepository.save(response);
+              return res.json({
+                message: "you accepted friendship to " + friend.username,
+              });
+            } else {
+              return res.json({
+                message: friend.username + " already accepted your friendship",
+              });
+            }
+          } else {
+            return res.json({ message: "you blocked " + friend.username });
+          }
+        } else {
+          return res.json({
+            message: friend.username + " haven't asked you friendship",
+          });
+        }
+      }
+      res.json({ message: "users not found" });
+    });
+
+    app.post("/deleteFriendship", async (req, res) => {
+      let me = await userRepository.findOne({ username: req.body.me });
+      let friend = await userRepository.findOne({ username: req.body.friend });
+      if (me && friend) {
+        let request = await friendshipRepository.findOne({
+          relations: ["answerer", "asker"],
+          where: { asker: me, answerer: friend },
+        });
+        let response = await friendshipRepository.findOne({
+          relations: ["answerer", "asker"],
+          where: { asker: friend, answerer: me },
+        });
+        if (request) {
+          if (!request.isBlocked) {
+            await friendshipRepository.remove(request);
+            return res.json({
+              message:
+                "you canceled your friendship request to " + friend.username,
+            });
+          }
+        }
+        if (response) {
+          await friendshipRepository.remove(response);
+          return res.json({
+            message: "you refused friendship with " + friend.username,
+          });
+        }
+      }
+      res.json({ message: "users not found" });
+    });
+
+    app.post("/blockFriendship", async (req, res) => {
+      let me = await userRepository.findOne({ username: req.body.me });
+      let friend = await userRepository.findOne({ username: req.body.friend });
+      if (me && friend) {
+        let response = await friendshipRepository.findOne({
+          relations: ["answerer", "asker"],
+          where: { asker: friend, answerer: me },
+        });
+        if (response) {
+          response.isBlocked = true;
+          await friendshipRepository.save(response);
+          return res.json({
+            message: "you blocked " + friend.username,
+          });
+        }
+      }
+      res.json({ message: "users not found" });
     });
 
     app.get(
@@ -151,42 +250,113 @@ createConnection()
           username: req.playerUsername,
         });
         if (user) {
-          let friendships = await friendshipRepository.find({
-            asker: user,
-            areFriended: true,
+          let friendshipsAsked = await friendshipRepository.find({
+            relations: ["asker", "answerer"],
+            where: { answerer: user, areFriended: true },
           });
-          friendships = friendships.concat(
-            await friendshipRepository.find({
-              answerer: user,
-              areFriended: true,
-            })
-          );
-          // map friends to usernames
-          let friends = friendships.map((friendship) => {
-            return friendship.answerer.username;
+          let friendshipsAnswered = await friendshipRepository.find({
+            relations: ["asker", "answerer"],
+            where: { asker: user, areFriended: true },
           });
-          let blocked = await friendshipRepository.find({
-            asker: user,
-            isBlocked: true,
+
+          let requests = await friendshipRepository.find({
+            relations: ["asker", "answerer"],
+            where: { asker: user, areFriended: false, isBlocked: false },
           });
-          blocked = blocked.concat(
-            await friendshipRepository.find({
-              answerer: user,
-              isBlocked: true,
-            })
-          );
+          let responses = await friendshipRepository.find({
+            relations: ["answerer", "asker"],
+            where: { answerer: user, areFriended: false, isBlocked: false },
+          });
+          let friendshipsAnsweredMap = friendshipsAnswered.map((friendship) => {
+            return {
+              username: friendship.answerer.username,
+            };
+          });
+          let friendshipsAskedMap = friendshipsAsked.map((friendship) => {
+            return {
+              username: friendship.asker.username,
+            };
+          });
+
+          let requestsMap = requests.map((request) => {
+            return {
+              username: request.answerer.username,
+              isBlocked: request.isBlocked,
+            };
+          });
+
+          let responsesMap = responses.map((response) => {
+            return {
+              username: response.asker.username,
+              isBlocked: response.isBlocked,
+            };
+          });
           res.json({
             isLoggedIn: true,
             user: {
               username: user.username,
               email: user.email,
-              friends: friends,
               money: user.money,
+              friends: [...friendshipsAnsweredMap, ...friendshipsAskedMap],
+              requests: requestsMap,
+              responses: responsesMap,
             },
           });
         }
       }
     );
+    app.post("/search", async (req, res) => {
+      let user = await userRepository.findOne({
+        username: req.body.username,
+      });
+      let users = await userRepository.find({
+        username: Like(`${req.body.friend}%`),
+      });
+      let usersMap = users.map((user) => {
+        return {
+          username: user.username,
+        };
+      });
+      let friendshipsRequested = await friendshipRepository.find({
+        relations: ["asker", "answerer"],
+        where: { asker: user, areFriended: true },
+      });
+      let friendshipsAnswered = await friendshipRepository.find({
+        relations: ["asker", "answerer"],
+        where: { answerer: user, areFriended: true },
+      });
+      let friendshipsRequestedUsername = friendshipsRequested.map(
+        (friendship) => {
+          return {
+            username: friendship.answerer.username,
+            areFriended: friendship.areFriended,
+          };
+        }
+      );
+      let friendshipsAnsweredUsername = friendshipsAnswered.map(
+        (friendship) => {
+          return {
+            username: friendship.asker.username,
+            areFriended: friendship.areFriended,
+          };
+        }
+      );
+      let friendsUsernames = [
+        ...friendshipsRequestedUsername,
+        ...friendshipsAnsweredUsername,
+      ];
+      usersMap.forEach((userMap) => {
+        if (user.username === userMap.username) {
+          usersMap.splice(usersMap.indexOf(userMap), 1);
+        }
+      });
+      friendsUsernames.forEach((friendUsername) => {
+        if (!friendUsername.username.startsWith(req.body.username)) {
+          friendsUsernames.splice(friendsUsernames.indexOf(friendUsername), 1);
+        }
+      });
+      res.json({ users: usersMap, friends: friendsUsernames });
+    });
 
     app.get(
       "/api/user/logout",
@@ -203,16 +373,11 @@ createConnection()
           .json({ success: true });
       }
     );
-
-    app.get("/protected", authorization, (req: PlayerAuthInfoRequest, res) => {
-      return res.json({ player: { username: req.playerUsername } });
-    });
     app.post(
       "/api/delete",
       authorization,
       async (req: PlayerAuthInfoRequest, res) => {
         await userRepository.delete({ username: req.playerUsername });
-        // review to choose what to do
         res.sendFile("index.html", {
           root: path.join(path.join(__dirname, "../../Frontend/public/")),
         });
@@ -296,8 +461,6 @@ createConnection()
                   .cookie("access_token", token, {
                     expires: new Date(Date.now() + 30 * 24 * 3600000),
                     maxAge: 30 * 24 * 3600000,
-                    httpOnly: false,
-                    // secure: true,
                   })
                   .status(200)
                   .json({ success: true });

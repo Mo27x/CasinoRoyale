@@ -54,7 +54,6 @@
     }
   };
   fetchData();
-  $: friends = user ? user.friends : [];
 </script>
 
 <div class="container">
@@ -116,7 +115,7 @@
     <Router primary={false} history={html5History}>
       {#if !loading}
         <Route path="/*" component={Home} {isLogged} {user} />
-        <Route path="/friends" component={Friends} {friends} />
+        <Route path="/friends" component={Friends} {user} />
         <Route path="/account" component={Account} {user} />
         <Route path="/settings" component={Settings} />
         <Route path="/poker" component={Poker} />

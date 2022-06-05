@@ -1,13 +1,25 @@
 <script lang="ts">
-  export let friends: string[] = [];
+  export let user: any = {};
+
+  const deleteFriendship = async (friend: string) => {
+    const response = await fetch("/deleteFriendship", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ me: user.username, friend: friend }),
+    });
+    const data = await response.json();
+    console.log(data);
+  };
 </script>
 
 <div class="content friends">
-  {#each friends as friend}
+  {#each user.friends as friend}
     <div class="center">
       <div class="user">
-        <div class="name-box"><div class="name">{friend}</div></div>
-        <div class="delete">
+        <div class="name-box"><div class="name">{friend.username}</div></div>
+        <div class="delete" on:click={() => deleteFriendship(friend.username)}>
           <img
             src="./icons/friend_remove.svg"
             alt="Remove Friend"

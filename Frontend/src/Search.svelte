@@ -1,5 +1,33 @@
 <script lang="ts">
-  export let friends;
+  export let user: any = {};
+  let users: any;
+  let friends: any;
+  let search: string = "";
+  const sendSearch = async () => {
+    let response = await fetch("/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ friend: search, username: user.username }),
+    });
+    let data = await response.json();
+    console.log(data);
+    users = data.users;
+    friends = data.friends;
+  };
+
+  const requestFriend = async (username: string) => {
+    let response = await fetch("/requestFriendship", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ me: user.username, friend: username }),
+    });
+    let data = await response.json();
+    console.log(data);
+  };
 </script>
 
 <div class="content search">
@@ -7,27 +35,45 @@
     <div class="search-input">
       <div class="center">
         <div class="input">
-          <form action="" method="post" class="fit">
-            <input type="text" name="username" id="username" />
-          </form>
+          <input
+            type="text"
+            name="username"
+            id="username"
+            bind:value={search}
+          />
         </div>
       </div>
-      <div class="img">
+      <div class="img" on:click={() => sendSearch()}>
         <img src="./icons/search.svg" alt="Search" class="icon" />
       </div>
     </div>
   </div>
   <div class="users">
-    {#each friends as friend}
-      <div class="center">
-        <div class="user">
-          <div class="name-box"><div class="name">{friend}</div></div>
-          <div class="delete">
-            <img src="./icons/friend_add.svg" alt="Add" class="icon" />
+    {#if users}
+      {#each users as user}
+        <div class="center">
+          <div class="user">
+            <div class="name-box"><div class="name">{user.username}</div></div>
+            <div class="action" on:click={() => requestFriend(user.username)}>
+              <img src="./icons/friend_add.svg" alt="Add" class="icon" />
+            </div>
           </div>
         </div>
-      </div>
-    {/each}
+      {/each}
+
+      {#each friends as friend}
+        <div class="center">
+          <div class="user">
+            <div class="name-box">
+              <div class="name">{friend.username}</div>
+            </div>
+            <div class="action" on:click={() => requestFriend(friend.username)}>
+              <img src="./icons/friend_remove.svg" alt="Remove" class="icon" />
+            </div>
+          </div>
+        </div>
+      {/each}
+    {/if}
   </div>
 </div>
 
@@ -90,7 +136,7 @@
     height: 2rem;
     width: 98%;
   }
-  .delete {
+  .action {
     grid-area: 1 / 2 / 2 / 3;
   }
 
