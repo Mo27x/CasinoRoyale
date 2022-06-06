@@ -228,6 +228,25 @@ createConnection()
       res.json({ message: "users not found" });
     });
 
+    app.post("/unblockFriendship", async (req, res) => {
+      let me = await userRepository.findOne({ username: req.body.me });
+      let friend = await userRepository.findOne({ username: req.body.friend });
+      if (me && friend) {
+        let response = await friendshipRepository.findOne({
+          relations: ["answerer", "asker"],
+          where: { asker: friend, answerer: me },
+        });
+        if (response) {
+          response.isBlocked = false;
+          await friendshipRepository.save(response);
+          return res.json({
+            message: "you unblocked " + friend.username,
+          });
+        }
+      }
+      res.json({ message: "users not found" });
+    });
+
     app.get(
       "/api/user/isLoggedIn",
       authorization,
