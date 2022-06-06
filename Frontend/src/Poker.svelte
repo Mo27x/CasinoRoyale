@@ -1,5 +1,15 @@
 <script lang="ts">
   import Table from "./Table.svelte";
+  import { pokerGameMoney } from "./store";
+  export let user: any;
+  export let socket: any;
+  let money: number;
+  let moneyToBet: number = user.money / 2;
+  let game: any;
+
+  pokerGameMoney.subscribe((value) => {
+    money = value;
+  });
 
   const progress = () => {
     let time = (<HTMLProgressElement>document.getElementById("time")).value;
@@ -22,7 +32,6 @@
 
   let plays = ["Check", "Bet"];
   let play = "";
-  let money = 500;
 
   const changePlay = (passedPay: string) => {
     play = passedPay;
@@ -31,6 +40,34 @@
   const changeAmount = (amount: number) => {
     money = amount;
   };
+  let personalCards: any = [];
+  const startGame = (money: number) => {
+    socket.emit("poker", user, money);
+  };
+  socket.on("pokerGame", (data: any) => {
+    game = data;
+  });
+  socket.on("personalCards", (data: any) => {
+    personalCards = JSON.parse(data);
+  });
+  const sendPlay = (play: string) => {
+    socket.emit(play, money);
+  };
+  const changeValue = (card: any) => {
+    if (card.num == 1) card.num = "A";
+    if (card.num == 11) card.num = "J";
+    if (card.num == 12) card.num = "Q";
+    if (card.num == 13) card.num = "K";
+    return card;
+  };
+  const getColor = (card: any) => {
+    if (card.suit == "spadesuit" || card.suit == "clubsuit") {
+      return "black";
+    } else {
+      return "red";
+    }
+  };
+  startGame(money);
 </script>
 
 <div class="container">
@@ -72,7 +109,7 @@
                 min="200"
                 max="1000"
                 step="50"
-                bind:value={money}
+                bind:value={moneyToBet}
               />
             </div>
           </div>

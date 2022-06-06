@@ -3,6 +3,10 @@ import Card from "./card";
 export default class Hand {
   public cards!: Card[];
   constructor() {}
+  getCards = (): Card[] => {
+    return this.cards ? this.cards : [];
+  };
+
   public strength = (cards: Card[]): number[] => {
     let aCards = [...this.cards, ...cards];
     let funRet: number | number[];

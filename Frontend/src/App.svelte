@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { io } from "socket.io-client";
   import {
     Router,
     Route,
@@ -6,13 +7,23 @@
     createHistory,
     createMemorySource,
   } from "svelte-navigator";
+  import { pokerGameMoney, userData } from "./store";
   import Settings from "./Settings.svelte";
   import Account from "./Account.svelte";
   import Friends from "./Friends.svelte";
   import Home from "./Home.svelte";
   import Poker from "./Poker.svelte";
 
+  const socket = io();
   let isLogged = true;
+  let money = 0;
+  let pokerMoney: number = 0;
+  pokerGameMoney.subscribe((value) => {
+    pokerMoney = value;
+  });
+  userData.subscribe((value) => {
+    user = value;
+  });
   let ids = ["home", "friends", "account", "settings"];
   let user: any = {};
   let loading = false;
@@ -22,7 +33,6 @@
     });
     document.getElementById(id).classList.add("active");
   };
-
   const html5History = createHistory(window);
   const memoryHistory = createHistory(createMemorySource());
 
@@ -40,6 +50,7 @@
       response = await fetch("/api/user/getUser");
       data = await response.json();
       user = data.user;
+      userData.set(user);
       loading = false;
     }
   };
@@ -63,7 +74,7 @@
     {:else}
       <Router primary={false} history={html5History}>
         {#if user}
-          <div class="center">{user.money}</div>
+          <div class="center money">{user.money}</div>
         {/if}
         <div class="left" on:click={() => change("home")}>
           <Link to="/">
@@ -114,11 +125,11 @@
   <main class="main">
     <Router primary={false} history={html5History}>
       {#if !loading}
-        <Route path="/*" component={Home} {isLogged} {user} />
+        <Route path="/*" component={Home} {isLogged} {user} {socket} />
         <Route path="/friends" component={Friends} {user} />
         <Route path="/account" component={Account} {user} />
         <Route path="/settings" component={Settings} />
-        <Route path="/poker" component={Poker} />
+        <Route path="/poker" component={Poker} {user} {socket} {pokerMoney} />
       {/if}
     </Router>
   </main>
@@ -163,6 +174,10 @@
     .title {
       text-align: center;
       font-size: 20pt;
+    }
+    .money {
+      text-align: center;
+      font-size: 16pt;
     }
 
     .menu {

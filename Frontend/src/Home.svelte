@@ -1,8 +1,11 @@
 <script lang="ts">
   import { Router, Link, Route } from "svelte-navigator";
+  import { pokerGameMoney } from "./store";
   import Poker from "./Poker.svelte";
   let isLoggingIn = true;
-  export let isLogged;
+  export let user: any;
+  export let isLogged: boolean;
+  export let socket: any;
   let loginData = {
     email: "",
     password: "",
@@ -18,7 +21,6 @@
   const changeMode = () => {
     isLoggingIn = !isLoggingIn;
   };
-  export let user;
   let pokerMoney = user.money / 2;
   let blackjackMoney = user.money / 2;
   let tradeMoney = user.money / 2;
@@ -57,6 +59,13 @@
     } else {
       alert(data.message);
     }
+  };
+  pokerGameMoney.subscribe((value) => {
+    pokerMoney = value;
+  });
+  pokerGameMoney.set(user.money / 2);
+  const updatePokerMoney = () => {
+    pokerGameMoney.set(pokerMoney);
   };
 </script>
 
@@ -173,7 +182,7 @@
     <div>
       <div class="center-items">
         <div class="space-between">
-          <div>Hi {user.username}</div>
+          <div class="sayHi">Hi {user.username}</div>
           <div><button class="daily_prize">Daily Prize</button></div>
         </div>
       </div>
@@ -191,6 +200,7 @@
                 max={user.money}
                 step="100"
                 bind:value={pokerMoney}
+                on:change={updatePokerMoney}
               />
             </div>
             <div><output for="money" id="output">{pokerMoney}</output></div>
@@ -200,9 +210,9 @@
               <button class="choice">Tutorial</button>
             </div>
             <div class="play verticallyCenter">
-              <button class="choice primary"
-                ><Link to="/poker" class="link">Play</Link></button
-              >
+              <button class="choice primary">
+                <Link to="/poker" class="link">Play</Link>
+              </button>
             </div>
             <Route path="/poker" component={Poker} />
           </div>
@@ -310,6 +320,14 @@
       color: #eeeeee;
       caret-color: #eeeeee;
     }
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      background-color: #5a5867;
+      border-color: transparent;
+      color: #eeeeee;
+      caret-color: #eeeeee;
+    }
     button.submit {
       font-family: "Play";
       font-size: 12pt;
@@ -341,6 +359,8 @@
       border: none;
       text-decoration: underline;
       color: #eeeeee;
+      padding: 0rem;
+      margin: 0rem;
     }
     .left {
       text-align: left;
@@ -424,6 +444,9 @@
 
     .play {
       grid-area: 1 / 2 / 2 / 3;
+    }
+    .sayHi {
+      font-size: 15pt;
     }
   }
 </style>

@@ -13,7 +13,7 @@ export default class Poker {
   public firstBetter!: Player;
   public cards!: Card[];
   public winners: Player[][] = [[]];
-  public end = false;
+  public isGameEnded = false;
   public plays!: string[];
   private canCheck!: boolean;
 
@@ -208,7 +208,7 @@ export default class Poker {
     for (let i = 0; i < this.pots.length; i++) {
       this.winners[i] = this.compareHands(this.pots[i]);
     }
-    this.end = true;
+    this.isGameEnded = true;
   };
 
   round = () => {
@@ -258,6 +258,10 @@ export default class Poker {
     return maxBet;
   };
 
+  getCallAmount = (player: Player): number => {
+    return this.getMaxBet() - player.bet;
+  };
+
   private isActive = (player: Player): boolean => {
     for (let i = 0; i < this.players.length; i++) {
       if (this.players[i] == player && !player.hasFolded && !player.allIn) {
@@ -275,6 +279,25 @@ export default class Poker {
       }
     });
     return ret;
+  };
+
+  simplify = (): any => {
+    let simplifiedPlayers = this.players.map((player) => {
+      return player.simplify();
+    });
+    let simplifiedWinners = this.winners.map((potWinners) => {
+      return potWinners.map((winner) => {
+        return winner.simplify();
+      });
+    });
+    let ret = {
+      players: simplifiedPlayers,
+      winners: this.isGameEnded ? simplifiedWinners : [[]],
+      cards: this.cards,
+      currentPlayer: this.currentPlayer.simplify(),
+      pot: this.pots.reduce((acc, curr) => acc + curr, 0),
+      plays: this.plays,
+    };
   };
 
   compareHands = (pot: number): Player[] => {

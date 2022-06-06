@@ -479,7 +479,6 @@ createConnection()
                 res
                   .cookie("access_token", token, {
                     expires: new Date(Date.now() + 30 * 24 * 3600000),
-                    maxAge: 30 * 24 * 3600000,
                   })
                   .status(200)
                   .json({ success: true });
@@ -558,93 +557,74 @@ createConnection()
           deletePlayer(getRoomById(getPlayerById(socket.id).roomId), socket.id);
         }
       });
-      socket.on("game", (user) => {
+      socket.on("poker", async (user, money) => {
+        console.log(user, money);
         if (!isPlayer(user.username)) {
           const roomId = getRoom();
           let player = new Player(user.username, user.money, socket.id, roomId);
           let room = getRoomById(roomId);
-          // check if user from database has enough money to play
-          socket.join(roomId);
-          room.players = [...room.players, player];
-          players = [...players, player];
-          const play = {
+          let u = await userRepository.findOne({
+            username: user.username,
+          });
+          if (u.money > room.bigBlind) {
+            socket.join(roomId);
+            room.players = [...room.players, player];
+            players = [...players, player];
+          }
+          const simplifiedPlayer = {
             username: player.username,
             money: player.money,
             cards: player.hand.cards,
           };
-          io.to(socket.id).emit("player", play);
-          io.to(socket.id).emit("id", room.players.indexOf(player));
-          // gotta change == 2
-          if (io.sockets.adapter.rooms.get(getRoomById(roomId).id).size == 2) {
-            room.startGame(200);
-            io.emit("currentPlayer", room.game.currentPlayer);
-            io.emit("players", room.players);
+          io.to(socket.id).emit("player", simplifiedPlayer);
+          if (room.players.length >= 2 && !room.isGameStarted) {
+            room.startGame();
           }
         }
       });
-      socket.on("check", (id: number) => {
+      socket.on("check", () => {
         let player = getPlayerById(socket.id);
-        let room = getRoomById(getPlayerById(socket.id).roomId);
-
-        // to test
-        // room.game.check(room.game.players[id]);
-        // room.game.check(player);
-        room.game.check(room.game.players[room.game.players.indexOf(player)]);
-        if (!room.game.end) {
-          io.emit("cards", JSON.stringify(room.game.cards));
-          io.emit("players", room.players);
-          if (room.game.rounds == 5) {
-            io.emit("winners", JSON.stringify(room.game.winners));
-          }
-          io.emit("currentPlayer", room.game.currentPlayer);
-        } else {
-          io.emit("winners", JSON.stringify(room.game.winners));
-        }
+        let room = getRoomById(player.roomId);
+        room.check(player);
+        io.emit("pokerGame", room.getSimplifiedGame());
+        io.emit("personalCards", player.getCards());
+        if (room.isGameEnded()) startGameAfterDelay(room);
       });
 
-      socket.on("call", (id: number) => {
-        let room = getRoomById(getPlayerById(socket.id).roomId);
-        room.game.call(room.game.players[id]);
-        io.emit("cards", JSON.stringify(room.game.cards));
-        io.emit("players", room.players);
-        if (room.game.end) {
-          io.emit("winners", JSON.stringify(room.game.winners));
-        }
-        io.emit("currentPlayer", room.game.currentPlayer);
+      socket.on("call", () => {
+        let player = getPlayerById(socket.id);
+        let room = getRoomById(player.roomId);
+        room.call(player);
+        io.emit("pokerGame", room.getSimplifiedGame());
+        io.emit("personalCards", player.getCards());
+        if (room.isGameEnded()) startGameAfterDelay(room);
       });
 
-      socket.on("bet", (id: number) => {
-        let room = getRoomById(getPlayerById(socket.id).roomId);
-        room.game.bet(room.game.players[id], 200);
-        io.emit("cards", JSON.stringify(room.game.cards));
-        io.emit("players", room.players);
-        io.emit("currentPlayer", room.game.currentPlayer);
+      socket.on("bet", (amount: number) => {
+        let player = getPlayerById(socket.id);
+        let room = getRoomById(player.roomId);
+        room.bet(player, amount);
+        io.emit("pokerGame", room.getSimplifiedGame());
+        io.emit("personalCards", player.getCards());
+        if (room.isGameEnded()) startGameAfterDelay(room);
       });
 
-      socket.on("raise", (id: number) => {
-        let room = getRoomById(getPlayerById(socket.id).roomId);
-        room.game.raise(room.game.players[id], 200);
-        io.emit("cards", JSON.stringify(room.game.cards));
-        io.emit("players", room.players);
-        io.emit("currentPlayer", room.game.currentPlayer);
+      socket.on("raise", (amount: number) => {
+        let player = getPlayerById(socket.id);
+        let room = getRoomById(player.roomId);
+        room.raise(player, amount);
+        io.emit("pokerGame", room.getSimplifiedGame());
+        io.emit("personalCards", player.getCards());
+        if (room.isGameEnded()) startGameAfterDelay(room);
       });
 
-      socket.on("fold", (id) => {
-        let room = getRoomById(getPlayerById(socket.id).roomId);
-        room.game.fold(room.game.players[id]);
-        io.emit("cards", JSON.stringify(room.game.cards));
-        io.emit("players", room.players);
-        if (room.game.end) {
-          io.emit("winners", JSON.stringify(room.game.winners));
-        }
-        io.emit("currentPlayer", room.game.currentPlayer);
-      });
-      socket.on("playerCards", (id) => {
-        let room = getRoomById(getPlayerById(socket.id).roomId);
-        io.to(socket.id).emit(
-          "playerCards",
-          JSON.stringify(room.game.players[id].hand.cards)
-        );
+      socket.on("fold", () => {
+        let player = getPlayerById(socket.id);
+        let room = getRoomById(player.roomId);
+        room.fold(player);
+        io.emit("pokerGame", room.getSimplifiedGame());
+        io.emit("personalCards", player.getCards());
+        if (room.isGameEnded()) startGameAfterDelay(room);
       });
     });
 
@@ -656,28 +636,11 @@ createConnection()
       console.log(`socket ${id} has joined room ${room}`);
     });
 
-    const simplifyPlayers = (players: Player[]) => {
-      let playersToSend = [];
-      players.forEach((player) => {
-        playersToSend = [
-          ...playersToSend,
-          {
-            username: player.username,
-            money: player.money,
-          },
-        ];
-      });
-      return playersToSend;
+    const startGameAfterDelay = (room: Room): void => {
+      setTimeout(() => {
+        room.startGame();
+      }, 30000);
     };
-
-    const simplifyPlayer = (player: Player) => {
-      return {
-        username: player.username,
-        money: player.money,
-        cards: player.hand.cards,
-      };
-    };
-
     const isPlayer = (username: string): boolean => {
       for (let i = 0; i < players.length; i++) {
         if (username == players[i].username) {
@@ -696,10 +659,14 @@ createConnection()
     };
 
     const deletePlayer = (room: Room, id: string) => {
-      for (let i = 0; i < players.length; i++) {
-        if (id == players[i].id) {
-          room.game.fold(players[i]);
-          players.splice(i, 1);
+      if (room.players.length > 0) {
+        for (let i = 0; i < players.length; i++) {
+          if (id == players[i].id) {
+            if (room.game) {
+              room.game.fold(players[i]);
+            }
+            players.splice(i, 1);
+          }
         }
       }
     };
@@ -734,7 +701,6 @@ createConnection()
       }
     };
 
-    const insertPlayerInRoom = () => {};
     // start express server
     httpServer.listen(3000);
 

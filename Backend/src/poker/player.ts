@@ -1,3 +1,4 @@
+import Card from "./card";
 import Hand from "./hand";
 
 export default class Player {
@@ -21,4 +22,13 @@ export default class Player {
     this.bet = 0;
     this.allIn = false;
   }
+  simplify = (): any => {
+    return {
+      username: this.username,
+      money: this.money,
+    };
+  };
+  getCards = (): Card[] => {
+    return this.hand.getCards();
+  };
 }
