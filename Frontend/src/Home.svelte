@@ -1,11 +1,11 @@
 <script lang="ts">
   import { Router, Link, Route } from "svelte-navigator";
-  import { pokerGameMoney } from "./store";
+  import { pokerGameMoney, isPlayingValue } from "./store";
   import Poker from "./Poker.svelte";
   let isLoggingIn = true;
   export let user: any;
   export let isLogged: boolean;
-  export let socket: any;
+  let isPlaying;
   let loginData = {
     email: "",
     password: "",
@@ -21,9 +21,9 @@
   const changeMode = () => {
     isLoggingIn = !isLoggingIn;
   };
-  let pokerMoney = user.money / 2;
-  let blackjackMoney = user.money / 2;
-  let tradeMoney = user.money / 2;
+  let pokerMoney = user ? user.money / 2 : 0;
+  let blackjackMoney = user ? user.money / 2 : 0;
+  let tradeMoney = user ? user.money / 2 : 0;
 
   const login = async () => {
     let response = await fetch("/api/login", {
@@ -63,7 +63,13 @@
   pokerGameMoney.subscribe((value) => {
     pokerMoney = value;
   });
-  pokerGameMoney.set(user.money / 2);
+  isPlayingValue.subscribe((value) => {
+    isPlaying = value;
+  });
+  isPlayingValue.set(false);
+  if (user) {
+    pokerGameMoney.set(user.money / 2);
+  }
   const updatePokerMoney = () => {
     pokerGameMoney.set(pokerMoney);
   };

@@ -1,37 +1,48 @@
 <script lang="ts">
   import Table from "./Table.svelte";
-  import { pokerGameMoney } from "./store";
-  export let user: any;
+  import { userData, pokerGameMoney, isPlayingValue } from "./store";
+  let user: any;
   export let socket: any;
   let money: number;
-  let moneyToBet: number = user.money / 2;
+  let moneyToBet: number = user ? user.money / 2 : 0;
   let game: any;
+  let isPlaying: boolean;
+  let personalCards: any;
+  let play = "";
+  let player: any;
+  let interval;
+  $: username = user.username;
 
   pokerGameMoney.subscribe((value) => {
     money = value;
   });
 
+  userData.subscribe((value) => {
+    user = value;
+  });
+  isPlayingValue.subscribe((value) => {
+    isPlaying = value;
+  });
+  isPlayingValue.set(true);
+
   const progress = () => {
     let time = (<HTMLProgressElement>document.getElementById("time")).value;
     if (time <= 0) {
       clearInterval(interval);
+      sendPlay("fold");
     } else {
       (<HTMLProgressElement>document.getElementById("time")).value -= 1;
-      if ((<HTMLProgressElement>document.getElementById("time")).value <= 5) {
+      if (time > 0 && time <= 5) {
         (<HTMLProgressElement>(
           document.getElementById("time")
         )).style.accentColor = "#973838";
+      } else {
+        (<HTMLProgressElement>(
+          document.getElementById("time")
+        )).style.accentColor = "#98fb98";
       }
     }
   };
-
-  let interval = setInterval(progress, 1000);
-
-  let bet = { min: 200, max: 1000 };
-  let raise = { min: 200, max: 1000 };
-
-  let plays = ["Check", "Bet"];
-  let play = "";
 
   const changePlay = (passedPay: string) => {
     play = passedPay;
@@ -40,94 +51,176 @@
   const changeAmount = (amount: number) => {
     money = amount;
   };
-  let personalCards: any = [];
+
   const startGame = (money: number) => {
     socket.emit("poker", user, money);
   };
   socket.on("pokerGame", (data: any) => {
     game = data;
+    console.log(game);
+    if (game.players) {
+      game.players.forEach((player: any) => {
+        if (player.username == user.username) {
+          game.players.splice(game.players.indexOf(player), 1);
+        }
+      });
+    }
+    if (game.cards) {
+      game.cards.forEach((card: any) => {
+        changeSuit(card);
+        changeNumber(card);
+      });
+    }
+    if (game.isGameEnded) {
+      console.log("game ended");
+      clearInterval(interval);
+      (<HTMLProgressElement>document.getElementById("time")).value = 20;
+      (<HTMLProgressElement>document.getElementById("time")).style.accentColor =
+        "#98fb98";
+    }
+    if (game.currentPlayer.username == user.username && !game.isGameEnded) {
+      interval = setInterval(progress, 1000);
+    }
   });
-  socket.on("personalCards", (data: any) => {
-    personalCards = JSON.parse(data);
-  });
-  const sendPlay = (play: string) => {
-    socket.emit(play, money);
+  const changeSuit = (card: any) => {
+    card.suit = "&" + card.suit + ";";
   };
-  const changeValue = (card: any) => {
+  const changeNumber = (card: any) => {
     if (card.num == 1) card.num = "A";
     if (card.num == 11) card.num = "J";
     if (card.num == 12) card.num = "Q";
     if (card.num == 13) card.num = "K";
-    return card;
   };
-  const getColor = (card: any) => {
-    if (card.suit == "spadesuit" || card.suit == "clubsuit") {
-      return "black";
-    } else {
-      return "red";
+  socket.on("personalCards", (data: any) => {
+    personalCards = data;
+    if (personalCards) {
+      personalCards.forEach((card: any) => {
+        changeSuit(card);
+        changeNumber(card);
+      });
+    }
+  });
+  socket.on("player", (data: any) => {
+    player = data;
+  });
+
+  const sendPlay = (play: string) => {
+    socket.emit(play, money);
+    if (player.username == user.username) {
+      clearInterval(interval);
+      (<HTMLProgressElement>document.getElementById("time")).value = 20;
     }
   };
+  const fetchUser = async () => {
+    let response = await fetch("/api/user/getUser");
+    let data = await response.json();
+    user = data.user;
+    userData.set(user);
+  };
   startGame(money);
+  fetchUser();
 </script>
 
 <div class="container">
   <div class="table">
-    <Table />
+    {#if game && player}
+      <Table {game} {username} {personalCards} {player} />
+    {:else}
+      <div class="center">
+        <img src="./icons/casinoroyale.jpg" alt="Logo" class="waiting" />
+      </div>
+    {/if}
   </div>
   <div class="center">
-    <div class="progress">
-      <progress id="time" max="20" value="20" />
-    </div>
+    {#if game && player}
+      <div class="progress">
+        <progress id="time" max="20" value="20" />
+      </div>
+    {/if}
   </div>
   <div class="center">
     <div class="buttons">
-      {#if play == ""}
-        <div class="space-evenly">
-          <button class="play">{plays[0]}</button>
-          <button class="play" on:click={() => changePlay("bet")}
-            >{plays[1]}</button
-          >
-          <button class="play fold">Fold</button>
-        </div>
-      {:else if play == "bet"}
-        <div class="detailed">
-          <div class="left">
-            <div class="top">Your {play}</div>
-            <div class="bottom">{money}</div>
+      {#if player}
+        {#if play == ""}
+          <div class="space-evenly">
+            <button class="play" on:click={() => sendPlay(player.plays[0])}>
+              {player.plays[0]}
+            </button>
+            <button class="play" on:click={() => changePlay(player.plays[1])}>
+              {player.plays[1]}
+            </button>
+            <button class="play fold" on:click={() => sendPlay("fold")}>
+              Fold
+            </button>
           </div>
+        {:else if play == "bet" || play == "raise"}
+          <div class="detailed">
+            <div class="left">
+              <div class="top">Your {play}</div>
+              <div class="bottom">{money}</div>
+            </div>
 
-          <div class="center">
-            <div class="space-between top">
-              <button on:click={() => changeAmount(200)}>Min</button>
-              <button on:click={() => changeAmount(1000)}>All-In</button>
+            <div class="center">
+              <div class="space-between top">
+                <button on:click={() => changeAmount(200)}>Min</button>
+                <button on:click={() => changeAmount(1000)}>All-In</button>
+              </div>
+              <div class="center bottom">
+                <input
+                  type="range"
+                  name="money"
+                  id="money"
+                  min="200"
+                  max="1000"
+                  step="50"
+                  bind:value={moneyToBet}
+                />
+              </div>
             </div>
-            <div class="center bottom">
-              <input
-                type="range"
-                name="money"
-                id="money"
-                min="200"
-                max="1000"
-                step="50"
-                bind:value={moneyToBet}
-              />
+            <div class="right">
+              <div class="top center">
+                <button on:click={() => sendPlay(player.plays[1])}>
+                  {player.plays[1]}
+                </button>
+              </div>
+              <div class="bottom center">
+                <button class="cancel" on:click={() => changePlay("")}>
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-          <div class="right">
-            <div class="top center"><button>{plays[1]}</button></div>
-            <div class="bottom center">
-              <button class="cancel" on:click={() => changePlay("")}
-                >Cancel</button
-              >
-            </div>
-          </div>
-        </div>
+        {/if}
       {/if}
     </div>
   </div>
 </div>
 
 <style>
+  .waiting {
+    width: 10rem;
+    height: 10rem;
+    border-radius: 50%;
+    -webkit-animation: spin 4s linear infinite;
+    -moz-animation: spin 4s linear infinite;
+    animation: spin 4s linear infinite;
+  }
+  @-moz-keyframes spin {
+    100% {
+      -moz-transform: rotate(360deg);
+    }
+  }
+  @-webkit-keyframes spin {
+    100% {
+      -webkit-transform: rotate(360deg);
+    }
+  }
+  @keyframes spin {
+    100% {
+      -webkit-transform: rotate(360deg);
+      transform: rotate(360deg);
+    }
+  }
   .container {
     display: grid;
     grid-template-columns: 1fr;
@@ -164,7 +257,7 @@
     width: 98%;
   }
   #time {
-    accent-color: palegreen;
+    accent-color: #98fb98;
     width: 100%;
   }
   .buttons {

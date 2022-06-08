@@ -464,7 +464,7 @@ createConnection()
               });
               if (user) {
                 const token = jwt.sign({ username: user.username }, "casino", {
-                  expiresIn: "24h",
+                  expiresIn: "30d",
                 });
                 let tokenToSave = new Token();
                 tokenToSave.token = token;
@@ -557,74 +557,111 @@ createConnection()
           deletePlayer(getRoomById(getPlayerById(socket.id).roomId), socket.id);
         }
       });
-      socket.on("poker", async (user, money) => {
-        console.log(user, money);
-        if (!isPlayer(user.username)) {
+      socket.on("poker", async (userData, money) => {
+        if (!isPlayer(userData.username)) {
           const roomId = getRoom();
-          let player = new Player(user.username, user.money, socket.id, roomId);
+          let player = new Player(userData.username, money, socket.id, roomId);
           let room = getRoomById(roomId);
-          let u = await userRepository.findOne({
-            username: user.username,
+          let user = await userRepository.findOne({
+            username: userData.username,
           });
-          if (u.money > room.bigBlind) {
+          if (user.money > room.bigBlind) {
+            // user.money -= money;
+            // userRepository.save(user);
             socket.join(roomId);
-            room.players = [...room.players, player];
+            room.addPlayer(player);
             players = [...players, player];
           }
-          const simplifiedPlayer = {
-            username: player.username,
-            money: player.money,
-            cards: player.hand.cards,
-          };
-          io.to(socket.id).emit("player", simplifiedPlayer);
           if (room.players.length >= 2 && !room.isGameStarted) {
             room.startGame();
+            io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
+            let roomUsers = await io.in(room.id).fetchSockets();
+            roomUsers.forEach((user) => {
+              let player = getPlayerById(user.id);
+              io.to(user.id).emit("player", player.simplify());
+              io.to(user.id).emit("personalCards", player.getCards());
+            });
           }
         }
       });
-      socket.on("check", () => {
+      socket.on("check", async () => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(player.roomId);
-        room.check(player);
-        io.emit("pokerGame", room.getSimplifiedGame());
-        io.emit("personalCards", player.getCards());
-        if (room.isGameEnded()) startGameAfterDelay(room);
+        if (room.getCurrentPlayer() === player) {
+          room.check(player);
+          io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
+          let roomUsers = await io.in(room.id).fetchSockets();
+          roomUsers.forEach((user) => {
+            let player = getPlayerById(user.id);
+            io.to(user.id).emit("player", player.simplify());
+            io.to(user.id).emit("personalCards", player.getCards());
+          });
+          if (room.isGameEnded()) startGameAfterDelay(room);
+        }
       });
 
-      socket.on("call", () => {
+      socket.on("call", async () => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(player.roomId);
-        room.call(player);
-        io.emit("pokerGame", room.getSimplifiedGame());
-        io.emit("personalCards", player.getCards());
-        if (room.isGameEnded()) startGameAfterDelay(room);
+        if (room.getCurrentPlayer() === player) {
+          room.call(player);
+          io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
+          let roomUsers = await io.in(room.id).fetchSockets();
+          roomUsers.forEach((user) => {
+            let player = getPlayerById(user.id);
+            io.to(user.id).emit("player", player.simplify());
+            io.to(user.id).emit("personalCards", player.getCards());
+          });
+          if (room.isGameEnded()) startGameAfterDelay(room);
+        }
       });
 
-      socket.on("bet", (amount: number) => {
+      socket.on("bet", async (amount: number) => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(player.roomId);
-        room.bet(player, amount);
-        io.emit("pokerGame", room.getSimplifiedGame());
-        io.emit("personalCards", player.getCards());
-        if (room.isGameEnded()) startGameAfterDelay(room);
+        if (room.getCurrentPlayer() === player) {
+          room.bet(player, amount);
+          io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
+          let roomUsers = await io.in(room.id).fetchSockets();
+          roomUsers.forEach((user) => {
+            let player = getPlayerById(user.id);
+            io.to(user.id).emit("player", player.simplify());
+            io.to(user.id).emit("personalCards", player.getCards());
+          });
+          if (room.isGameEnded()) startGameAfterDelay(room);
+        }
       });
 
-      socket.on("raise", (amount: number) => {
+      socket.on("raise", async (amount: number) => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(player.roomId);
-        room.raise(player, amount);
-        io.emit("pokerGame", room.getSimplifiedGame());
-        io.emit("personalCards", player.getCards());
-        if (room.isGameEnded()) startGameAfterDelay(room);
+        if (room.getCurrentPlayer() === player) {
+          room.raise(player, amount);
+          io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
+          let roomUsers = await io.in(room.id).fetchSockets();
+          roomUsers.forEach((user) => {
+            let player = getPlayerById(user.id);
+            io.to(user.id).emit("player", player.simplify());
+            io.to(user.id).emit("personalCards", player.getCards());
+          });
+          if (room.isGameEnded()) startGameAfterDelay(room);
+        }
       });
 
-      socket.on("fold", () => {
+      socket.on("fold", async () => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(player.roomId);
-        room.fold(player);
-        io.emit("pokerGame", room.getSimplifiedGame());
-        io.emit("personalCards", player.getCards());
-        if (room.isGameEnded()) startGameAfterDelay(room);
+        if (room.getCurrentPlayer() === player) {
+          room.fold(player);
+          io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
+          let roomUsers = await io.in(room.id).fetchSockets();
+          roomUsers.forEach((user) => {
+            let player = getPlayerById(user.id);
+            io.to(user.id).emit("player", player.simplify());
+            io.to(user.id).emit("personalCards", player.getCards());
+          });
+          if (room.isGameEnded()) startGameAfterDelay(room);
+        }
       });
     });
 
@@ -637,8 +674,15 @@ createConnection()
     });
 
     const startGameAfterDelay = (room: Room): void => {
-      setTimeout(() => {
+      setTimeout(async () => {
         room.startGame();
+        io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
+        let roomUsers = await io.in(room.id).fetchSockets();
+        roomUsers.forEach((user) => {
+          let player = getPlayerById(user.id);
+          io.to(user.id).emit("player", player.simplify());
+          io.to(user.id).emit("personalCards", player.getCards());
+        });
       }, 30000);
     };
     const isPlayer = (username: string): boolean => {
@@ -682,8 +726,7 @@ createConnection()
     const getRoom = (): string => {
       let availableRooms: string[] = [];
       for (let i = 0; i < rooms.length; i++) {
-        // perfect number of players to play a poker game
-        if (io.sockets.adapter.rooms.get(rooms[i].id).size < 6) {
+        if (rooms[i].players.length < 6) {
           availableRooms = [...availableRooms, rooms[i].id];
         }
       }

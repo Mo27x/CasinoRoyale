@@ -4,7 +4,7 @@ export default class Hand {
   public cards!: Card[];
   constructor() {}
   getCards = (): Card[] => {
-    return this.cards ? this.cards : [];
+    return this.cards ? this.cards : undefined;
   };
 
   public strength = (cards: Card[]): number[] => {

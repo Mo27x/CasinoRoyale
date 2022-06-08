@@ -1,70 +1,57 @@
 <script lang="ts">
   import Card from "./Card.svelte";
-  let game = { pot: 9999999 };
+  export let game: any;
+  export let player: any;
+  export let personalCards: any;
+  export let username: string;
 </script>
 
 <div class="table">
   <div class="pot">
     <div>POT</div>
-    <div>{game.pot}</div>
+    {#if game.pot}
+      <div>{game.pot}</div>
+    {/if}
   </div>
   <div class="card-place">
     <div class="cards">
-      <Card num="10" suit="&diamondsuit;" color="red" />
-      <Card num="A" suit="&spadesuit;" color="black" />
-      <Card num="Q" suit="&heartsuit;" color="red" />
-      <Card num="7" suit="&clubsuit;" color="black" />
-      <Card num="9" suit="&spadesuit;" color="black" />
+      {#if game}
+        {#if game.cards}
+          {#each game.cards as card}
+            <Card {card} />
+          {/each}
+        {/if}
+      {/if}
     </div>
   </div>
-  <div class="player player1">
-    <div class="top">Player1</div>
-    <div class="center player-cards">
-      <Card />
-      <Card />
+  {#if game}
+    <div class="player player1">
+      <div class="top">{player.username}</div>
+      <div class="center player-cards">
+        {#if personalCards}
+          {#each personalCards as card}
+            <Card {card} />
+          {/each}
+        {:else}
+          <Card />
+          <Card />
+        {/if}
+      </div>
+      <div class="bottom">{player.money}</div>
     </div>
-    <div class="bottom">999999</div>
-  </div>
-  <div class="player player2">
-    <div class="top">Player2</div>
-    <div class="center player-cards">
-      <Card />
-      <Card />
-    </div>
-    <div class="bottom">999999</div>
-  </div>
-  <div class="player player3">
-    <div class="top">Player3</div>
-    <div class="center player-cards">
-      <Card />
-      <Card />
-    </div>
-    <div class="bottom">999999</div>
-  </div>
-  <div class="player player4">
-    <div class="top">Player4</div>
-    <div class="center player-cards">
-      <Card />
-      <Card />
-    </div>
-    <div class="bottom">999999</div>
-  </div>
-  <div class="player player5">
-    <div class="top">Player5</div>
-    <div class="center player-cards">
-      <Card />
-      <Card />
-    </div>
-    <div class="bottom">999999</div>
-  </div>
-  <div class="player player6">
-    <div>Player6</div>
-    <div class="player-cards">
-      <Card />
-      <Card />
-    </div>
-    <div>999999</div>
-  </div>
+    {#each game.players as player, index}
+      {#if player.username != username}
+        <div class="player player{index + 2}">
+          <div class="top">{player.username}</div>
+          <div class="center player-cards">
+            <Card />
+            <Card />
+          </div>
+          <div class="bottom">{player.money}</div>
+        </div>
+      {/if}
+    {/each}
+  {/if}
 </div>
 
 <style>
@@ -106,6 +93,7 @@
       display: flex;
       align-items: center;
       justify-content: space-evenly;
+      height: max-content;
     }
 
     .player {
@@ -137,36 +125,42 @@
       grid-area: 5 / 2 / 6 / 3;
       width: 96%;
       height: 96%;
+      height: max-content;
     }
 
     .player2 {
       grid-area: 4 / 1 / 5 / 2;
       width: 96%;
       height: 96%;
+      height: max-content;
     }
 
     .player3 {
       grid-area: 2 / 1 / 3 / 2;
       width: 96%;
       height: 96%;
+      height: max-content;
     }
 
     .player4 {
       grid-area: 1 / 2 / 2 / 3;
       width: 96%;
       height: 96%;
+      height: max-content;
     }
 
     .player5 {
       grid-area: 2 / 3 / 3 / 4;
       width: 96%;
       height: 96%;
+      height: max-content;
     }
 
     .player6 {
       grid-area: 4 / 3 / 5 / 4;
       width: 96%;
       height: 96%;
+      height: max-content;
     }
 
     .player-cards {

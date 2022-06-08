@@ -10,9 +10,11 @@ export default class Room {
 
   public constructor(public readonly id: string) {}
   startGame = () => {
-    this.game = new Poker(this.bigBlind, this.players);
-    this.rotateBlinds();
-    this.isGameStarted = true;
+    if (!this.game || this.isGameEnded() || !this.isGameStarted) {
+      this.game = new Poker(this.bigBlind, this.players);
+      this.isGameStarted = true;
+    }
+    // this.rotateBlinds();
   };
   rotateBlinds = () => {
     const first = this.players.shift();
@@ -75,9 +77,6 @@ export default class Room {
   }
   getCallAmount = (player): number => {
     return this.game.getCallAmount(player);
-  };
-  getPossiblePlays = (): string[] => {
-    return this.game.plays;
   };
   isGameEnded = (): boolean => {
     return this.game.isGameEnded;

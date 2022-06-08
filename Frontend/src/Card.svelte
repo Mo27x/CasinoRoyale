@@ -1,20 +1,34 @@
 <script lang="ts">
-  export let suit: string = "";
-  export let num: string | number = -1;
-  export let color: string = "";
+  let suit: string = "";
+  let num: string | number = -1;
+  export let card: any = {
+    suit: suit,
+    num: num,
+  };
+  let color: string = "";
+  const getColor = () => {
+    if (card.suit == "&spadesuit;" || card.suit == "&clubsuit;") {
+      color = "black";
+    } else {
+      color = "red";
+    }
+  };
+  if (card.suit != "" && card.num != -1) {
+    getColor();
+  }
 </script>
 
-{#if suit != "" && num != -1}
+{#if card.suit != "" && card.num != -1}
   <div class="card {color}">
     <div class="card-inner">
       <div class="top-left">
-        <div>{num}</div>
-        <div>{@html suit}</div>
+        <div>{card.num}</div>
+        <div>{@html card.suit}</div>
       </div>
-      <div class="center">{@html suit}</div>
+      <div class="center">{@html card.suit}</div>
       <div class="bottom-right">
-        <div>{num}</div>
-        <div>{@html suit}</div>
+        <div>{card.num}</div>
+        <div>{@html card.suit}</div>
       </div>
     </div>
   </div>
@@ -28,7 +42,6 @@
     display: inline-block;
     width: 2.4rem;
     height: 3rem;
-    font-size: 7.5pt;
     background: #ffffff;
     text-align: center;
     padding: 0;
@@ -49,18 +62,20 @@
 
   .top-left {
     grid-area: 1/1/2/2;
+    font-size: 50%;
   }
 
   .bottom-right {
     grid-area: 1/3/2/4;
     transform: rotate(180deg);
+    font-size: 50%;
   }
 
   .center {
     display: grid;
     place-items: center;
     grid-area: 1/2/2/3;
-    font-size: 24pt;
+    font-size: 100%;
   }
 
   .red {

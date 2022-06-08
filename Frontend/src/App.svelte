@@ -7,7 +7,7 @@
     createHistory,
     createMemorySource,
   } from "svelte-navigator";
-  import { pokerGameMoney, userData } from "./store";
+  import { pokerGameMoney, userData, isPlayingValue } from "./store";
   import Settings from "./Settings.svelte";
   import Account from "./Account.svelte";
   import Friends from "./Friends.svelte";
@@ -16,17 +16,20 @@
 
   const socket = io();
   let isLogged = true;
-  let money = 0;
   let pokerMoney: number = 0;
+  let isPlaying: boolean = false;
+  let ids = ["home", "friends", "account", "settings"];
+  let user: any;
+  let loading = false;
   pokerGameMoney.subscribe((value) => {
     pokerMoney = value;
   });
   userData.subscribe((value) => {
     user = value;
   });
-  let ids = ["home", "friends", "account", "settings"];
-  let user: any = {};
-  let loading = false;
+  isPlayingValue.subscribe((value) => {
+    isPlaying = value;
+  });
   const change = (id: string) => {
     ids.forEach((element) => {
       document.getElementById(element).classList.remove("active");
@@ -82,7 +85,7 @@
           </Link>
         </div>
         <div class="right">
-          {#if window.location.pathname == "/poker"}
+          {#if isPlaying}
             <Link to="/">
               <div on:click={() => change("home")}>
                 <img src="./icons/back.svg" alt="Go Back" class="icon" />
@@ -125,11 +128,11 @@
   <main class="main">
     <Router primary={false} history={html5History}>
       {#if !loading}
-        <Route path="/*" component={Home} {isLogged} {user} {socket} />
+        <Route path="/*" component={Home} {isLogged} {user} />
         <Route path="/friends" component={Friends} {user} />
         <Route path="/account" component={Account} {user} />
         <Route path="/settings" component={Settings} />
-        <Route path="/poker" component={Poker} {user} {socket} {pokerMoney} />
+        <Route path="/poker" component={Poker} {socket} />
       {/if}
     </Router>
   </main>

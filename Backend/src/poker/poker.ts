@@ -14,7 +14,6 @@ export default class Poker {
   public cards!: Card[];
   public winners: Player[][] = [[]];
   public isGameEnded = false;
-  public plays!: string[];
   private canCheck!: boolean;
 
   public constructor(private bigBlind: number, public players: Player[]) {
@@ -46,7 +45,7 @@ export default class Poker {
     }
 
     this.canCheck = false;
-    this.plays = ["call", "raise", "fold"];
+    this.updatePlayersPlays();
     this.actualBet = bigBlind;
   }
 
@@ -92,7 +91,6 @@ export default class Poker {
       }
       this.firstBetter = player;
       this.canCheck = false;
-      this.plays = ["call", "raise", "fold"];
       this.nextPlayer(player);
       return true;
     }
@@ -178,8 +176,8 @@ export default class Poker {
 
   fold = (player: Player): boolean => {
     if (this.isActive(player) && this.currentPlayer == player) {
+      player.hasFolded = true;
       if (this.getActivePlayers().length > 1) {
-        player.hasFolded = true;
         this.nextPlayer(player);
         if (player == this.firstBetter) {
           this.firstBetter = this.currentPlayer;
@@ -212,10 +210,10 @@ export default class Poker {
   };
 
   round = () => {
+    this.updatePlayersPlays();
     if (this.currentPlayer == this.firstBetter) {
       this.canCheck = true;
       this.rounds++;
-      this.plays = ["check", "bet", "fold"];
       if (this.rounds == 1) {
         this.giveCards();
       } else if (this.rounds == 2) {
@@ -262,6 +260,18 @@ export default class Poker {
     return this.getMaxBet() - player.bet;
   };
 
+  updatePlayersPlays = () => {
+    this.players.forEach((player) => {
+      if (this.isActive(player)) {
+        if (this.getCallAmount(player) > 0) {
+          player.plays = ["call", "raise", "fold"];
+        } else {
+          player.plays = ["check", "bet", "fold"];
+        }
+      }
+    });
+  };
+
   private isActive = (player: Player): boolean => {
     for (let i = 0; i < this.players.length; i++) {
       if (this.players[i] == player && !player.hasFolded && !player.allIn) {
@@ -282,8 +292,9 @@ export default class Poker {
   };
 
   simplify = (): any => {
-    let simplifiedPlayers = this.players.map((player) => {
-      return player.simplify();
+    let simplifiedPlayers: Player[] = [];
+    this.players.forEach((player) => {
+      simplifiedPlayers = [...simplifiedPlayers, player.simplify()];
     });
     let simplifiedWinners = this.winners.map((potWinners) => {
       return potWinners.map((winner) => {
@@ -292,12 +303,13 @@ export default class Poker {
     });
     let ret = {
       players: simplifiedPlayers,
-      winners: this.isGameEnded ? simplifiedWinners : [[]],
-      cards: this.cards,
+      winners: this.isGameEnded ? simplifiedWinners : undefined,
+      cards: this.cards ? this.cards : undefined,
       currentPlayer: this.currentPlayer.simplify(),
       pot: this.pots.reduce((acc, curr) => acc + curr, 0),
-      plays: this.plays,
+      isGameEnded: this.isGameEnded,
     };
+    return ret;
   };
 
   compareHands = (pot: number): Player[] => {
