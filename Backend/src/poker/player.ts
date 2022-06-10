@@ -10,6 +10,14 @@ export default class Player {
   public highestCardNums!: number[];
   public bet: number;
   private _plays: any;
+  private _callAmount: number;
+
+  public get callAmount(): number {
+    return this._callAmount;
+  }
+  public set callAmount(value: number) {
+    this._callAmount = value;
+  }
   public get plays() {
     return this._plays;
   }
@@ -34,10 +42,19 @@ export default class Player {
     return {
       username: this.username,
       money: this.money,
-      plays: this.plays,
+      plays: this._plays,
+      callAmount: this._callAmount,
     };
   };
   getCards = (): Card[] => {
     return this.hand.getCards();
+  };
+  reset = (): void => {
+    this.hasFolded = false;
+    this.hand = new Hand();
+    this.pots = -1;
+    this.bet = 0;
+    this.allIn = false;
+    this.plays = undefined;
   };
 }

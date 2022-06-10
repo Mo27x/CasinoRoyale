@@ -402,6 +402,55 @@ createConnection()
         });
       }
     );
+
+    app.post(
+      "/changeUsername",
+      body("username").not().isEmpty().trim().escape().custom(isValidUsername),
+      async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          res.status(400).json({ errors: errors.array() });
+        } else {
+          let user = await userRepository.findOne({
+            username: req.body.username,
+          });
+          if (user) {
+            return res.json({
+              success: false,
+              message: "username already exists",
+            });
+          }
+          user.username = req.body.newUsername;
+          await userRepository.save(user);
+          return res.json({ success: true, message: "username changed" });
+        }
+      }
+    );
+
+    app.post(
+      "/changeEmail",
+      body("email").isEmail().normalizeEmail(),
+      async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          res.status(400).json({ errors: errors.array() });
+        } else {
+          let user = await userRepository.findOne({
+            email: req.body.email,
+          });
+          if (user) {
+            return res.json({
+              success: false,
+              message: "email already exists",
+            });
+          }
+          user.email = req.body.newEmail;
+          await userRepository.save(user);
+          return res.json({ success: true, message: "email changed" });
+        }
+      }
+    );
+
     app.post(
       "/changePassword",
       authorization,
@@ -553,12 +602,21 @@ createConnection()
       console.log("a user connected");
       socket.on("disconnect", () => {
         console.log("a user disconnected");
-        if (getPlayerById(socket.id)) {
-          deletePlayer(getRoomById(getPlayerById(socket.id).roomId), socket.id);
+        let player = getPlayerById(socket.id);
+        if (player) {
+          let room = getRoomById(player.roomId);
+          if (room) {
+            room.removePlayer(player);
+            if (room.players.length == 0) {
+              deleteRoom(room);
+            }
+            players.splice(players.indexOf(player), 1);
+          }
         }
       });
       socket.on("poker", async (userData, money) => {
-        if (!isPlayer(userData.username)) {
+        let player = getPlayerById(socket.id);
+        if (!player) {
           const roomId = getRoom();
           let player = new Player(userData.username, money, socket.id, roomId);
           let room = getRoomById(roomId);
@@ -567,12 +625,12 @@ createConnection()
           });
           if (user.money > room.bigBlind) {
             // user.money -= money;
-            // userRepository.save(user);
+            userRepository.save(user);
             socket.join(roomId);
-            room.addPlayer(player);
+            room.addWaitingPlayer(player);
             players = [...players, player];
           }
-          if (room.players.length >= 2 && !room.isGameStarted) {
+          if (room.getPlayersCanPlay().length >= 2 && !room.isGameStarted) {
             room.startGame();
             io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
             let roomUsers = await io.in(room.id).fetchSockets();
@@ -582,85 +640,74 @@ createConnection()
               io.to(user.id).emit("personalCards", player.getCards());
             });
           }
+        } else {
+          let room = getRoomById(player.roomId);
+          if (room && room.isPlayerInGame(player) && !room.isGameEnded) {
+            io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
+          }
         }
       });
+      socket.on("leaveRoom", async () => {
+        let player = getPlayerById(socket.id);
+        if (player) {
+          let room = getRoomById(player.roomId);
+          if (room) {
+            let user = await userRepository.findOne({
+              username: player.username,
+            });
+            user.money += room.removePlayer(player);
+            userRepository.save(user);
+            action(room);
+            console.log(room.getPlayersCanPlay().length);
+            if (room.getPlayersCanPlay().length == 0) {
+              deleteRoom(room);
+            }
+          }
+        }
+      });
+
       socket.on("check", async () => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(player.roomId);
-        if (room.getCurrentPlayer() === player) {
-          room.check(player);
-          io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
-          let roomUsers = await io.in(room.id).fetchSockets();
-          roomUsers.forEach((user) => {
-            let player = getPlayerById(user.id);
-            io.to(user.id).emit("player", player.simplify());
-            io.to(user.id).emit("personalCards", player.getCards());
-          });
-          if (room.isGameEnded()) startGameAfterDelay(room);
+        if (room.check(player)) {
+          action(room);
         }
       });
 
       socket.on("call", async () => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(player.roomId);
-        if (room.getCurrentPlayer() === player) {
-          room.call(player);
-          io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
-          let roomUsers = await io.in(room.id).fetchSockets();
-          roomUsers.forEach((user) => {
-            let player = getPlayerById(user.id);
-            io.to(user.id).emit("player", player.simplify());
-            io.to(user.id).emit("personalCards", player.getCards());
-          });
-          if (room.isGameEnded()) startGameAfterDelay(room);
+        if (room.call(player)) {
+          action(room);
         }
       });
 
       socket.on("bet", async (amount: number) => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(player.roomId);
-        if (room.getCurrentPlayer() === player) {
-          room.bet(player, amount);
-          io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
-          let roomUsers = await io.in(room.id).fetchSockets();
-          roomUsers.forEach((user) => {
-            let player = getPlayerById(user.id);
-            io.to(user.id).emit("player", player.simplify());
-            io.to(user.id).emit("personalCards", player.getCards());
-          });
-          if (room.isGameEnded()) startGameAfterDelay(room);
+        if (room.bet(player, amount)) {
+          action(room);
         }
       });
 
       socket.on("raise", async (amount: number) => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(player.roomId);
-        if (room.getCurrentPlayer() === player) {
-          room.raise(player, amount);
-          io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
-          let roomUsers = await io.in(room.id).fetchSockets();
-          roomUsers.forEach((user) => {
-            let player = getPlayerById(user.id);
-            io.to(user.id).emit("player", player.simplify());
-            io.to(user.id).emit("personalCards", player.getCards());
-          });
-          if (room.isGameEnded()) startGameAfterDelay(room);
+        if (room.raise(player, amount)) {
+          action(room);
         }
       });
 
       socket.on("fold", async () => {
         let player = getPlayerById(socket.id);
         let room = getRoomById(player.roomId);
-        if (room.getCurrentPlayer() === player) {
-          room.fold(player);
-          io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
-          let roomUsers = await io.in(room.id).fetchSockets();
-          roomUsers.forEach((user) => {
-            let player = getPlayerById(user.id);
-            io.to(user.id).emit("player", player.simplify());
-            io.to(user.id).emit("personalCards", player.getCards());
+        if (room.fold(player)) {
+          let user = await userRepository.findOne({
+            username: player.username,
           });
-          if (room.isGameEnded()) startGameAfterDelay(room);
+          user.money += player.money;
+          userRepository.save(user);
+          action(room);
         }
       });
     });
@@ -673,8 +720,37 @@ createConnection()
       console.log(`socket ${id} has joined room ${room}`);
     });
 
+    const action = async (room: Room) => {
+      io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
+      let roomUsers = await io.in(room.id).fetchSockets();
+      roomUsers.forEach((user) => {
+        let player = getPlayerById(user.id);
+        io.to(user.id).emit("player", player.simplify());
+        io.to(user.id).emit("personalCards", player.getCards());
+      });
+      if (room.isGameEnded()) {
+        room.getPlayers().forEach(async (player) => {
+          let user = await userRepository.findOne({
+            username: player.username,
+          });
+          user.money += player.money;
+          userRepository.save(user);
+        });
+        startGameAfterDelay(room);
+      }
+    };
+
     const startGameAfterDelay = (room: Room): void => {
       setTimeout(async () => {
+        room.getPlayers().forEach(async (player) => {
+          let user = await userRepository.findOne({
+            username: player.username,
+          });
+          if (user.money > room.bigBlind) {
+            user.money -= player.money;
+            userRepository.save(user);
+          }
+        });
         room.startGame();
         io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
         let roomUsers = await io.in(room.id).fetchSockets();
@@ -685,32 +761,11 @@ createConnection()
         });
       }, 30000);
     };
-    const isPlayer = (username: string): boolean => {
-      for (let i = 0; i < players.length; i++) {
-        if (username == players[i].username) {
-          return true;
-        }
-      }
-      return false;
-    };
 
     const getPlayerById = (id: string) => {
       for (let i = 0; i < players.length; i++) {
         if (players[i].id === id) {
           return players[i];
-        }
-      }
-    };
-
-    const deletePlayer = (room: Room, id: string) => {
-      if (room.players.length > 0) {
-        for (let i = 0; i < players.length; i++) {
-          if (id == players[i].id) {
-            if (room.game) {
-              room.game.fold(players[i]);
-            }
-            players.splice(i, 1);
-          }
         }
       }
     };
@@ -721,6 +776,14 @@ createConnection()
         .substring(0, 7);
       rooms = [...rooms, new Room(str)];
       return str;
+    };
+
+    const deleteRoom = (room: Room) => {
+      for (let i = 0; i < rooms.length; i++) {
+        if (rooms[i] === room) {
+          rooms.splice(i, 1);
+        }
+      }
     };
 
     const getRoom = (): string => {

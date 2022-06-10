@@ -3,6 +3,7 @@ import Player from "./player";
 import Poker from "./poker";
 
 export default class Room {
+  private _waitingPlayers: Player[] = [];
   public players: Player[] = [];
   public game: Poker;
   public bigBlind: number = 200;
@@ -10,7 +11,11 @@ export default class Room {
 
   public constructor(public readonly id: string) {}
   startGame = () => {
-    if (!this.game || this.isGameEnded() || !this.isGameStarted) {
+    this.addWaitingPlayersToPlayers();
+    if (
+      (!this.game || this.isGameEnded() || !this.isGameStarted) &&
+      this.players.length > 1
+    ) {
       this.game = new Poker(this.bigBlind, this.players);
       this.isGameStarted = true;
     }
@@ -21,37 +26,74 @@ export default class Room {
     this.players = [...this.players, first];
   };
 
-  getContinuers = (): Player[] => {
+  getPlayersCanPlay = (): Player[] => {
     let continuers = [];
     this.players.forEach((player) => {
-      if (player.money >= 200 && this.isPlayerInRoom(player)) {
+      if (player.money >= 200 && this.isPlayerInRoom(player))
         continuers = [...continuers, player];
-      }
+      else this.removePlayer(player);
+    });
+    this.waitingPlayers.forEach((player) => {
+      if (player.money >= 200 && this.isPlayerInRoom(player))
+        continuers = [...continuers, player];
+      else this.removePlayer(player);
     });
     return continuers;
   };
-  addPlayer = (player: Player): void => {
-    this.players = [...this.players, player];
+
+  private addWaitingPlayersToPlayers() {
+    this.getPlayersCanPlay().forEach((player) => {
+      if (!this.players.includes(player)) {
+        this.players = [...this.players, player];
+        this.waitingPlayers = this.waitingPlayers.includes(player)
+          ? this.waitingPlayers.splice(this.waitingPlayers.indexOf(player), 1)
+          : this.waitingPlayers;
+      }
+    });
+  }
+  public get waitingPlayers(): Player[] {
+    return this._waitingPlayers;
+  }
+  public set waitingPlayers(value: Player[]) {
+    this._waitingPlayers = value;
+  }
+
+  addWaitingPlayer(player: Player) {
+    this.waitingPlayers = [...this.waitingPlayers, player];
+  }
+  removeWaitingPlayer(player: Player) {
+    this.waitingPlayers.splice(this.waitingPlayers.indexOf(player), 1);
+  }
+
+  // addPlayer = (player: Player): void => {
+  //   this.players = [...this.players, player];
+  // };
+  removePlayer = (player: Player): number => {
+    let playerMoney = player.money;
+    if (this.isPlayerInRoom(player)) {
+      if (this.isPlayerInGame(player)) {
+        this.fold(player);
+        player.money = 0;
+      }
+      this.players.splice(this.players.indexOf(player), 1);
+    }
+    return playerMoney;
   };
-  removePlayer = (player: Player): void => {
-    if (this.isPlayerInRoom(player))
-      this.players = this.players.splice(this.players.indexOf(player), 1);
+  bet = (player: Player, amount: number): boolean => {
+    if (this.isPlayerInRoom(player)) return this.game.bet(player, amount);
   };
-  bet = (player: Player, amount: number): void => {
-    if (this.isPlayerInRoom(player)) this.game.bet(player, amount);
+  call = (player: Player): boolean => {
+    if (this.isPlayerInRoom(player)) return this.game.call(player);
   };
-  call = (player: Player): void => {
-    if (this.isPlayerInRoom(player)) this.game.call(player);
-  };
-  raise = (player: Player, amount: number): void => {
-    if (this.isPlayerInRoom(player)) this.game.raise(player, amount);
+  raise = (player: Player, amount: number): boolean => {
+    if (this.isPlayerInRoom(player)) return this.game.raise(player, amount);
   };
 
-  fold = (player: Player): void => {
-    if (this.isPlayerInRoom(player)) this.game.fold(player);
+  fold = (player: Player): boolean => {
+    if (this.isPlayerInRoom(player)) return this.game.fold(player);
   };
-  check = (player: Player): void => {
-    if (this.isPlayerInRoom(player)) this.game.check(player);
+  check = (player: Player): boolean => {
+    if (this.isPlayerInRoom(player)) return this.game.check(player);
   };
   getWinners = (): Player[][] => {
     return this.game.winners;
@@ -73,7 +115,9 @@ export default class Room {
     return simplifiedPlayers;
   };
   isPlayerInRoom(player: Player): boolean {
-    return this.players.includes(player);
+    return (
+      this.players.includes(player) || this.waitingPlayers.includes(player)
+    );
   }
   getCallAmount = (player): number => {
     return this.game.getCallAmount(player);
@@ -83,5 +127,8 @@ export default class Room {
   };
   getSimplifiedGame = (): any => {
     return this.game ? this.game.simplify() : undefined;
+  };
+  isPlayerInGame = (player: Player): boolean => {
+    return this.game.players.includes(player);
   };
 }

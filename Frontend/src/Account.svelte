@@ -1,5 +1,10 @@
 <script lang="ts">
-  export let user;
+  import { userData } from "./store";
+  export let socket: any;
+  let user: any;
+  userData.subscribe((data: any) => {
+    user = data;
+  });
 
   const resizeEmail = (email: string) => {
     let shortEmail = "";
@@ -16,6 +21,7 @@
     }
     return shortEmail;
   };
+  socket.emit("leaveRoom");
 </script>
 
 <div>

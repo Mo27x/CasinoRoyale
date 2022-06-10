@@ -45,15 +45,17 @@ export default class Poker {
     }
 
     this.canCheck = false;
-    this.updatePlayersPlays();
+    this.updatePlayers();
     this.actualBet = bigBlind;
+    this.resetPlayers();
   }
 
   check = (player: Player): boolean => {
     if (
       this.isActive(player) &&
       player == this.currentPlayer &&
-      (this.canCheck || this.getMaxBet() == player.bet)
+      (this.canCheck || this.getMaxBet() == player.bet) &&
+      !this.isGameEnded
     ) {
       this.nextPlayer(player);
       return true;
@@ -67,7 +69,8 @@ export default class Poker {
       player.money > money &&
       this.isActive(player) &&
       player == this.currentPlayer &&
-      this.canCheck
+      this.canCheck &&
+      !this.isGameEnded
     ) {
       if (player.money > money) {
         this.pots[this.potNum] += money;
@@ -101,7 +104,8 @@ export default class Poker {
     if (
       this.isActive(player) &&
       player == this.currentPlayer &&
-      !this.canCheck
+      !this.canCheck &&
+      !this.isGameEnded
     ) {
       if (player.money > this.getMaxBet() - player.bet) {
         this.pots[this.potNum] += this.getMaxBet() - player.bet;
@@ -139,7 +143,8 @@ export default class Poker {
       this.isActive(player) &&
       player == this.currentPlayer &&
       !this.canCheck &&
-      money > 2 * this.actualBet
+      money > 2 * this.actualBet &&
+      !this.isGameEnded
     ) {
       if (player.money >= money) {
         this.pots[this.potNum] += money;
@@ -175,7 +180,11 @@ export default class Poker {
   };
 
   fold = (player: Player): boolean => {
-    if (this.isActive(player) && this.currentPlayer == player) {
+    if (
+      this.isActive(player) &&
+      // this.currentPlayer == player &&
+      !this.isGameEnded
+    ) {
       player.hasFolded = true;
       if (this.getActivePlayers().length > 1) {
         this.nextPlayer(player);
@@ -209,8 +218,14 @@ export default class Poker {
     this.isGameEnded = true;
   };
 
+  resetPlayers = () => {
+    this.players.forEach((player) => {
+      player.reset();
+    });
+  };
+
   round = () => {
-    this.updatePlayersPlays();
+    this.updatePlayers();
     if (this.currentPlayer == this.firstBetter) {
       this.canCheck = true;
       this.rounds++;
@@ -260,10 +275,11 @@ export default class Poker {
     return this.getMaxBet() - player.bet;
   };
 
-  updatePlayersPlays = () => {
+  updatePlayers = () => {
     this.players.forEach((player) => {
       if (this.isActive(player)) {
-        if (this.getCallAmount(player) > 0) {
+        player.callAmount = this.getCallAmount(player);
+        if (player.callAmount > 0) {
           player.plays = ["call", "raise", "fold"];
         } else {
           player.plays = ["check", "bet", "fold"];

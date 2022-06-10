@@ -1,4 +1,13 @@
-<script lang="ts"></script>
+<script lang="ts">
+  import { userData } from "./store";
+  let user: any;
+
+  userData.subscribe((data) => {
+    user = data;
+  });
+  export let socket: any;
+  socket.emit("leaveRoom");
+</script>
 
 <div>
   <div class="box">

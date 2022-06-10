@@ -2,6 +2,10 @@
   import Friendships from "./Friendships.svelte";
   import Requests from "./Requests.svelte";
   import Search from "./Search.svelte";
+  import { userData } from "./store";
+
+  let user: any;
+  export let socket: any;
 
   const options = [
     { name: "friendships", component: Friendships },
@@ -19,7 +23,10 @@
     document.getElementById(id).classList.add("selected");
     selected = options[index];
   };
-  export let user: any = {};
+  userData.subscribe((value) => {
+    user = value;
+  });
+  socket.emit("leaveRoom");
 </script>
 
 <div class="container">

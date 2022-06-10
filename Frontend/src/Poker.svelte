@@ -3,18 +3,18 @@
   import { userData, pokerGameMoney, isPlayingValue } from "./store";
   let user: any;
   export let socket: any;
-  let money: number;
-  let moneyToBet: number = user ? user.money / 2 : 0;
+  let gameMoney: number;
+  let moneyToBet: number = 0;
   let game: any;
   let isPlaying: boolean;
   let personalCards: any;
   let play = "";
   let player: any;
-  let interval;
+  let interval: any;
   $: username = user.username;
 
   pokerGameMoney.subscribe((value) => {
-    money = value;
+    gameMoney = value;
   });
 
   userData.subscribe((value) => {
@@ -29,6 +29,8 @@
     let time = (<HTMLProgressElement>document.getElementById("time")).value;
     if (time <= 0) {
       clearInterval(interval);
+      (<HTMLProgressElement>document.getElementById("time")).style.accentColor =
+        "#973838";
       sendPlay("fold");
     } else {
       (<HTMLProgressElement>document.getElementById("time")).value -= 1;
@@ -36,10 +38,6 @@
         (<HTMLProgressElement>(
           document.getElementById("time")
         )).style.accentColor = "#973838";
-      } else {
-        (<HTMLProgressElement>(
-          document.getElementById("time")
-        )).style.accentColor = "#98fb98";
       }
     }
   };
@@ -49,7 +47,7 @@
   };
 
   const changeAmount = (amount: number) => {
-    money = amount;
+    gameMoney = amount;
   };
 
   const startGame = (money: number) => {
@@ -57,7 +55,6 @@
   };
   socket.on("pokerGame", (data: any) => {
     game = data;
-    console.log(game);
     if (game.players) {
       game.players.forEach((player: any) => {
         if (player.username == user.username) {
@@ -66,17 +63,21 @@
       });
     }
     if (game.cards) {
+      fetchUser();
       game.cards.forEach((card: any) => {
         changeSuit(card);
         changeNumber(card);
       });
     }
     if (game.isGameEnded) {
-      console.log("game ended");
       clearInterval(interval);
-      (<HTMLProgressElement>document.getElementById("time")).value = 20;
-      (<HTMLProgressElement>document.getElementById("time")).style.accentColor =
-        "#98fb98";
+      if (<HTMLProgressElement>document.getElementById("time")) {
+        (<HTMLProgressElement>document.getElementById("time")).value = 20;
+        (<HTMLProgressElement>(
+          document.getElementById("time")
+        )).style.accentColor = "#98fb98";
+      }
+      fetchUser();
     }
     if (game.currentPlayer.username == user.username && !game.isGameEnded) {
       interval = setInterval(progress, 1000);
@@ -102,10 +103,11 @@
   });
   socket.on("player", (data: any) => {
     player = data;
+    moneyToBet = Math.ceil(player.money / 2);
   });
 
   const sendPlay = (play: string) => {
-    socket.emit(play, money);
+    socket.emit(play, moneyToBet);
     if (player.username == user.username) {
       clearInterval(interval);
       (<HTMLProgressElement>document.getElementById("time")).value = 20;
@@ -117,7 +119,7 @@
     user = data.user;
     userData.set(user);
   };
-  startGame(money);
+  startGame(gameMoney);
   fetchUser();
 </script>
 
@@ -144,7 +146,8 @@
         {#if play == ""}
           <div class="space-evenly">
             <button class="play" on:click={() => sendPlay(player.plays[0])}>
-              {player.plays[0]}
+              {player.plays[0] + " "}
+              {player.callAmount > 0 ? player.callAmount : ""}
             </button>
             <button class="play" on:click={() => changePlay(player.plays[1])}>
               {player.plays[1]}
@@ -157,21 +160,27 @@
           <div class="detailed">
             <div class="left">
               <div class="top">Your {play}</div>
-              <div class="bottom">{money}</div>
+              <div class="bottom">{gameMoney}</div>
             </div>
 
             <div class="center">
               <div class="space-between top">
-                <button on:click={() => changeAmount(200)}>Min</button>
-                <button on:click={() => changeAmount(1000)}>All-In</button>
+                <button
+                  on:click={() =>
+                    changeAmount(player.money > 200 ? 200 : player.money)}
+                  >Min</button
+                >
+                <button on:click={() => changeAmount(player.money)}>
+                  All-In
+                </button>
               </div>
               <div class="center bottom">
                 <input
                   type="range"
                   name="money"
                   id="money"
-                  min="200"
-                  max="1000"
+                  min={player.money > 200 ? 200 : player.money}
+                  max={player.money}
                   step="50"
                   bind:value={moneyToBet}
                 />

@@ -1,10 +1,11 @@
 <script lang="ts">
   import { Router, Link, Route } from "svelte-navigator";
-  import { pokerGameMoney, isPlayingValue } from "./store";
+  import { pokerGameMoney, isPlayingValue, userData } from "./store";
   import Poker from "./Poker.svelte";
   let isLoggingIn = true;
-  export let user: any;
   export let isLogged: boolean;
+  export let socket: any;
+  let user: any;
   let isPlaying;
   let loginData = {
     email: "",
@@ -21,7 +22,7 @@
   const changeMode = () => {
     isLoggingIn = !isLoggingIn;
   };
-  let pokerMoney = user ? user.money / 2 : 0;
+  let pokerMoney = user ? Math.ceil(user.money / 2) : 0;
   let blackjackMoney = user ? user.money / 2 : 0;
   let tradeMoney = user ? user.money / 2 : 0;
 
@@ -60,6 +61,9 @@
       alert(data.message);
     }
   };
+  userData.subscribe((data) => {
+    user = data;
+  });
   pokerGameMoney.subscribe((value) => {
     pokerMoney = value;
   });
@@ -68,11 +72,12 @@
   });
   isPlayingValue.set(false);
   if (user) {
-    pokerGameMoney.set(user.money / 2);
+    pokerGameMoney.set(Math.ceil(user.money / 2));
   }
   const updatePokerMoney = () => {
     pokerGameMoney.set(pokerMoney);
   };
+  socket.emit("leaveRoom");
 </script>
 
 {#if !isLogged}
