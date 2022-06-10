@@ -129,6 +129,6 @@ export default class Room {
     return this.game ? this.game.simplify() : undefined;
   };
   isPlayerInGame = (player: Player): boolean => {
-    return this.game.players.includes(player);
+    return this.players ? this.game.players.includes(player) : false;
   };
 }

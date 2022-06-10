@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Link, Route } from "svelte-navigator";
   import Friendships from "./Friendships.svelte";
   import Requests from "./Requests.svelte";
   import Search from "./Search.svelte";
@@ -7,21 +8,12 @@
   let user: any;
   export let socket: any;
 
-  const options = [
-    { name: "friendships", component: Friendships },
-    { name: "requests", component: Requests },
-    { name: "search", component: Search },
-  ];
-
-  let selected = options[0];
-
   let ids = ["friendships", "requests", "search"];
   const change = (id: string, index: number) => {
     ids.forEach((element) => {
       document.getElementById(element).classList.remove("selected");
     });
     document.getElementById(id).classList.add("selected");
-    selected = options[index];
   };
   userData.subscribe((value) => {
     user = value;
@@ -36,22 +28,29 @@
       class="option selected"
       on:click={() => change("friendships", 0)}
     >
-      Friendships
+      <Link to="friendships">Friendships</Link>
     </div>
     <div id="requests" class="option" on:click={() => change("requests", 1)}>
-      Requests
+      <Link to="requests">Requests</Link>
     </div>
     <div id="search" class="option" on:click={() => change("search", 2)}>
-      Search
+      <Link to="search">Search</Link>
     </div>
   </div>
   <div class="content-area">
-    <svelte:component this={selected.component} {user} />
+    <!-- <svelte:component this={selected.component} {user} /> -->
+    <Route path="" component={Friendships} {user} />
+    <Route path="friendships" component={Friendships} {user} />
+    <Route path="requests" component={Requests} {user} />
+    <Route path="search" component={Search} {user} />
   </div>
 </div>
 
 <style>
   @media screen and (max-width: 660px) {
+    :global(a) {
+      text-decoration: none;
+    }
     .container {
       display: grid;
       grid-template-columns: 1fr;
