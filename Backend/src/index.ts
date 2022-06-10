@@ -624,7 +624,7 @@ createConnection()
             username: userData.username,
           });
           if (user.money > room.bigBlind) {
-            // user.money -= money;
+            user.money -= money;
             userRepository.save(user);
             socket.join(roomId);
             room.addWaitingPlayer(player);
