@@ -55,6 +55,7 @@
       user = data.user;
       userData.set(user);
       loading = false;
+      console.log(user);
     }
   };
 

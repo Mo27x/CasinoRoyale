@@ -26,6 +26,12 @@ export class User {
   @Column({ nullable: true })
   money: number;
 
+  @Column({ nullable: true })
+  streak: number;
+
+  @Column({ nullable: true })
+  lastAccess: Date;
+
   @OneToMany(() => Friendship, (Friendship) => Friendship.asker)
   requests: Friendship[];
 

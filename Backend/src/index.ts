@@ -86,6 +86,22 @@ createConnection()
       return next();
     };
 
+    const getDailyPrize = async (username: string) => {
+      const user = await userRepository.findOne({ username: username });
+      if (user) {
+        const time = user.lastAccess.getTime() - Date.now();
+        const hours = time / 1000 / 60 / 60;
+        if (hours >= 24) {
+          if (hours < 48) {
+            if (user.streak < 7) user.streak++;
+          } else user.streak = 1;
+          user.lastAccess = new Date(Date.now());
+          user.money += user.streak * 1000;
+        }
+        await userRepository.save(user);
+      }
+    };
+
     const isValidEmail: CustomValidator = (value) => {
       return userRepository.findOne({ email: value }).then((user) => {
         if (user) {
@@ -267,6 +283,7 @@ createConnection()
       "/api/user/getUser",
       authorization,
       async (req: PlayerAuthInfoRequest, res) => {
+        getDailyPrize(req.playerUsername);
         let user = await userRepository.findOne({
           username: req.playerUsername,
         });
@@ -318,6 +335,7 @@ createConnection()
               username: user.username,
               email: user.email,
               money: user.money,
+              streak: user.streak,
               friends: [...friendshipsAnsweredMap, ...friendshipsAskedMap],
               requests: requestsMap,
               responses: responsesMap,
@@ -579,7 +597,9 @@ createConnection()
               user.username = req.body.username;
               user.email = req.body.email;
               user.password = req.body.password;
-              user.money = 20000;
+              user.money = 1000000;
+              user.lastAccess = new Date(Date.now());
+              user.streak = 1;
               user.requests = [];
               user.responses = [];
               userRepository.save(user);
