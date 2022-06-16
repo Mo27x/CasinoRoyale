@@ -55,32 +55,34 @@
   };
   socket.on("pokerGame", (data: any) => {
     game = data;
-    if (game.players) {
-      game.players.forEach((player: any) => {
-        if (player.username == user.username) {
-          game.players.splice(game.players.indexOf(player), 1);
-        }
-      });
-    }
-    if (game.cards) {
-      fetchUser();
-      game.cards.forEach((card: any) => {
-        changeSuit(card);
-        changeNumber(card);
-      });
-    }
-    if (game.isGameEnded) {
-      clearInterval(interval);
-      if (<HTMLProgressElement>document.getElementById("time")) {
-        (<HTMLProgressElement>document.getElementById("time")).value = 20;
-        (<HTMLProgressElement>(
-          document.getElementById("time")
-        )).style.accentColor = "#98fb98";
+    if (game) {
+      if (game.players) {
+        game.players.forEach((player: any) => {
+          if (player.username == user.username) {
+            game.players.splice(game.players.indexOf(player), 1);
+          }
+        });
       }
-      fetchUser();
-    }
-    if (game.currentPlayer.username == user.username && !game.isGameEnded) {
-      interval = setInterval(progress, 1000);
+      if (game.cards) {
+        fetchUser();
+        game.cards.forEach((card: any) => {
+          changeSuit(card);
+          changeNumber(card);
+        });
+      }
+      if (game.isGameEnded) {
+        clearInterval(interval);
+        if (<HTMLProgressElement>document.getElementById("time")) {
+          (<HTMLProgressElement>document.getElementById("time")).value = 20;
+          (<HTMLProgressElement>(
+            document.getElementById("time")
+          )).style.accentColor = "#98fb98";
+        }
+        fetchUser();
+      }
+      if (game.currentPlayer.username == user.username && !game.isGameEnded) {
+        interval = setInterval(progress, 1000);
+      }
     }
   });
   const changeSuit = (card: any) => {

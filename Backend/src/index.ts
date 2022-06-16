@@ -412,19 +412,26 @@ createConnection()
           .json({ success: true });
       }
     );
+
     app.post(
-      "/api/delete",
+      "/api/deleteAccount",
       authorization,
       async (req: PlayerAuthInfoRequest, res) => {
-        await userRepository.delete({ username: req.playerUsername });
-        res.sendFile("index.html", {
-          root: path.join(path.join(__dirname, "../../Frontend/public/")),
+        let user = await userRepository.findOne({
+          username: req.playerUsername,
         });
+        if (user) {
+          await userRepository.delete({ username: req.playerUsername });
+          return res
+            .clearCookie("access_token")
+            .json({ success: true, message: "account deleted" });
+        }
+        res.json({ success: false, message: "account not found" });
       }
     );
 
     app.post(
-      "/changeUsername",
+      "/api/user/changeUsername",
       body("username").not().isEmpty().trim().escape().custom(isValidUsername),
       async (req, res) => {
         const errors = validationResult(req);
@@ -442,13 +449,15 @@ createConnection()
           }
           user.username = req.body.newUsername;
           await userRepository.save(user);
-          return res.json({ success: true, message: "username changed" });
+          return res
+            .clearCookie("access_token")
+            .json({ success: true, message: "username changed" });
         }
       }
     );
 
     app.post(
-      "/changeEmail",
+      ".api/user/changeEmail",
       body("email").isEmail().normalizeEmail(),
       async (req, res) => {
         const errors = validationResult(req);
@@ -472,7 +481,7 @@ createConnection()
     );
 
     app.post(
-      "/changePassword",
+      "/api/user/changePassword",
       authorization,
       body("newPassword")
         .isLength({ min: 8 })
@@ -488,7 +497,6 @@ createConnection()
         }
         return true;
       }),
-
       async (req: PlayerAuthInfoRequest, res) => {
         let user = await userRepository.findOne({
           username: req.playerUsername,
@@ -503,7 +511,9 @@ createConnection()
           user.password = req.body.newPassword;
           user.tokens = [];
           userRepository.save(user);
+          return res.json({ success: true, message: "password changed" });
         }
+        res.json({ success: false, message: "password incorrect" });
       }
     );
     app.post(
@@ -757,16 +767,18 @@ createConnection()
           io.to(user.id).emit("personalCards", player.getCards());
         }
       });
-      if (room.isGameEnded()) {
-        room.getPlayers().forEach(async (player) => {
-          let user = await userRepository.findOne({
-            username: player.username,
+      if (room.game) {
+        if (room.isGameEnded()) {
+          room.getPlayers().forEach(async (player) => {
+            let user = await userRepository.findOne({
+              username: player.username,
+            });
+            user.money -= player.initialMoney;
+            user.money += player.money;
+            userRepository.save(user);
           });
-          user.money -= player.initialMoney;
-          user.money += player.money;
-          userRepository.save(user);
-        });
-        startGameAfterDelay(room);
+          startGameAfterDelay(room);
+        }
       }
     };
 

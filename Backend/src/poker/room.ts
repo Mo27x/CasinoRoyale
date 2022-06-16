@@ -67,13 +67,15 @@ export default class Room {
   removePlayer = (player: Player): number => {
     let playerMoney = player.money - player.initialMoney;
     if (this.isPlayerInRoom(player)) {
-      if (
-        this.isPlayerInGame(player) &&
-        !this.game.isGameEnded &&
-        this.game.getActivePlayers().length > 1
-      ) {
-        this.fold(player);
-        player.money = 0;
+      if (this.game) {
+        if (
+          this.isPlayerInGame(player) &&
+          !this.game.isGameEnded &&
+          this.game.getActivePlayers().length > 1
+        ) {
+          this.fold(player);
+          player.money = 0;
+        }
       }
       this.players.splice(this.players.indexOf(player), 1);
     }

@@ -6,6 +6,7 @@
     Link,
     createHistory,
     createMemorySource,
+    // useNavigate,
   } from "svelte-navigator";
   import { pokerGameMoney, userData, isPlayingValue } from "./store";
   import Settings from "./Settings.svelte";
@@ -13,8 +14,12 @@
   import Friends from "./Friends.svelte";
   import Home from "./Home.svelte";
   import Poker from "./Poker.svelte";
+  import ChangeUsername from "./ChangeUsername.svelte";
+  import ChangePassword from "./ChangePassword.svelte";
+  import NotFound from "./NotFound.svelte";
 
   const socket = io();
+  // const navigate = useNavigate();
   let isLogged = true;
   let pokerMoney: number = 0;
   let isPlaying: boolean = false;
@@ -88,6 +93,7 @@
         <div class="right">
           {#if isPlaying}
             <Link to="/">
+              <!-- <div on:click={() => navigate(-1)} /> -->
               <div on:click={() => change("home")}>
                 <img src="./icons/back.svg" alt="Go Back" class="icon" />
               </div>
@@ -129,11 +135,22 @@
   <main class="main">
     <Router primary={false} history={html5History}>
       {#if !loading}
-        <Route path="" component={Home} {isLogged} {socket} />
+        <Route path="/" component={Home} {isLogged} {socket} />
         <Route path="friends/*" component={Friends} {socket} />
         <Route path="account" component={Account} {socket} />
-        <Route path="settings" component={Settings} {socket} />
+        <Route path="settings/*" component={Settings} {socket} />
         <Route path="poker" component={Poker} {socket} />
+        <Route component={NotFound} {socket} />
+        <Route
+          path="settings/changeUsername"
+          component={ChangeUsername}
+          {socket}
+        />
+        <Route
+          path="settings.changePassword"
+          componet={ChangePassword}
+          {socket}
+        />
       {/if}
     </Router>
   </main>

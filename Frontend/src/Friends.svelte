@@ -38,7 +38,6 @@
     </div>
   </div>
   <div class="content-area">
-    <!-- <svelte:component this={selected.component} {user} /> -->
     <Route path="" component={Friendships} {user} />
     <Route path="friendships" component={Friendships} {user} />
     <Route path="requests" component={Requests} {user} />

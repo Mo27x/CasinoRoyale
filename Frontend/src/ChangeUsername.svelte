@@ -1,12 +1,41 @@
-<script lang="ts"></script>
+<script lang="ts">
+  // import { useNavigate } from "svelte-navigator";
+  export let socket: any;
+
+  socket.emit("leaveRoom");
+  // const navigate = useNavigate();
+  let username = "";
+  const changeUsername = async () => {
+    let response = await fetch("/api/user/changeUsername", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: username,
+      }),
+    });
+    let data = await response.json();
+    if (data.success) {
+      alert("Username changed successfully");
+    } else {
+      alert(data.message);
+    }
+  };
+  console.log("salve");
+</script>
 
 <div class="container">
   <div class="center">
-    <form action="" method="post">
+    <div>
       <div><label for="username">Enter a new username</label></div>
       <div><input type="text" name="username" id="username" /></div>
-      <div><input type="submit" value="Change username" /></div>
-    </form>
+      <!-- <div><button on:click={() => navigate(-1)}>Cancel</button></div> -->
+      <div><button>Cancel</button></div>
+      <div>
+        <button on:click={() => changeUsername()}>Change username</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -29,7 +58,7 @@
     border-radius: 0.5rem;
     margin: 0.5rem 0 0 0;
   }
-  input[type="submit"] {
+  button {
     background: none;
     border: none;
     background-color: #5a5867;

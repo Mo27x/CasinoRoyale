@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { Link, Route } from "svelte-navigator";
+  import ChangePassword from "./ChangePassword.svelte";
+  import ChangeUsername from "./ChangeUsername.svelte";
   import { userData } from "./store";
   let user: any;
 
@@ -7,6 +10,22 @@
   });
   export let socket: any;
   socket.emit("leaveRoom");
+
+  const deleteAccount = async () => {
+    let response = await fetch("/api/deleteAccount", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        user: user,
+      }),
+    });
+    let data = await response.json();
+    if (data.success) {
+      window.location.href = "/";
+    }
+  };
 </script>
 
 <div>
@@ -15,7 +34,7 @@
       <div class="title">Change username</div>
       <hr />
       <div class="content">
-        <button>Change username</button>
+        <Link to="changeUsername">Change username</Link>
       </div>
     </div>
   </div>
@@ -24,7 +43,7 @@
       <div class="title">Change password</div>
       <hr />
       <div class="content">
-        <button>Change password</button>
+        <Link to="changePassword">Change password</Link>
       </div>
     </div>
   </div>
@@ -36,13 +55,27 @@
         Once you delete your account, there is no going back
       </div>
       <div class="content">
-        <button class="red">Delete your account</button>
+        <button class="red" on:click={() => deleteAccount()}>
+          Delete your account
+        </button>
       </div>
     </div>
+  </div>
+  <div class="test">
+    <!-- <Route path="" component={ChangeUsername} {socket} /> -->
+    <!-- <Route path="changeUsername" componet={ChangeUsername} {socket} /> -->
+    <!-- <Route path="ChagePassword" component={ChangePassword} {socket} /> -->
   </div>
 </div>
 
 <style>
+  .test {
+    width: 100%;
+    height: 100%;
+  }
+  :global(a) {
+    text-decoration: none;
+  }
   .title {
     font-size: 16pt;
   }
