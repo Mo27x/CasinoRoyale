@@ -70,7 +70,7 @@ createConnection()
 
     // setup express app here
     // ...
-    const authorization = (req: PlayerAuthInfoRequest, res, next) => {
+    const authorization = async (req: PlayerAuthInfoRequest, res, next) => {
       const token = req.cookies.access_token;
       if (typeof token == "undefined") {
         return res.status(403).json({ message: "Forbidden" });
@@ -79,6 +79,8 @@ createConnection()
         const data = jwt.verify(token, "casino") as JwtPayload;
         req.playerUsername = data.username;
       } catch {
+        let tokenToDelete = await tokenRepository.findOne({ token: token });
+        if (tokenToDelete) await tokenRepository.remove(tokenToDelete);
         res.sendStatus(403);
       }
       return next();
@@ -656,9 +658,9 @@ createConnection()
               username: player.username,
             });
             user.money += room.removePlayer(player);
+            players.splice(players.indexOf(player), 1);
             userRepository.save(user);
             action(room);
-            console.log(room.getPlayersCanPlay().length);
             if (room.getPlayersCanPlay().length == 0) {
               deleteRoom(room);
             }
@@ -668,9 +670,9 @@ createConnection()
 
       socket.on("check", async () => {
         let player = getPlayerById(socket.id);
-        let room = getRoomById(player.roomId);
-        if (room.check(player)) {
-          action(room);
+        if (player) {
+          let room = getRoomById(player.roomId);
+          if (room) if (room.check(player)) action(room);
         }
       });
 
@@ -700,14 +702,19 @@ createConnection()
 
       socket.on("fold", async () => {
         let player = getPlayerById(socket.id);
-        let room = getRoomById(player.roomId);
-        if (room.fold(player)) {
-          let user = await userRepository.findOne({
-            username: player.username,
-          });
-          user.money += player.money;
-          userRepository.save(user);
-          action(room);
+        if (player) {
+          let room = getRoomById(player.roomId);
+          if (room) {
+            if (room.fold(player)) {
+              console.log(player.username + " folded");
+              let user = await userRepository.findOne({
+                username: player.username,
+              });
+              user.money += player.money;
+              userRepository.save(user);
+              action(room);
+            }
+          }
         }
       });
     });
@@ -725,14 +732,17 @@ createConnection()
       let roomUsers = await io.in(room.id).fetchSockets();
       roomUsers.forEach((user) => {
         let player = getPlayerById(user.id);
-        io.to(user.id).emit("player", player.simplify());
-        io.to(user.id).emit("personalCards", player.getCards());
+        if (player) {
+          io.to(user.id).emit("player", player.simplify());
+          io.to(user.id).emit("personalCards", player.getCards());
+        }
       });
       if (room.isGameEnded()) {
         room.getPlayers().forEach(async (player) => {
           let user = await userRepository.findOne({
             username: player.username,
           });
+          user.money -= player.initialMoney;
           user.money += player.money;
           userRepository.save(user);
         });
@@ -759,7 +769,7 @@ createConnection()
           io.to(user.id).emit("player", player.simplify());
           io.to(user.id).emit("personalCards", player.getCards());
         });
-      }, 30000);
+      }, 20000);
     };
 
     const getPlayerById = (id: string) => {

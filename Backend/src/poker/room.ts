@@ -64,14 +64,14 @@ export default class Room {
   removeWaitingPlayer(player: Player) {
     this.waitingPlayers.splice(this.waitingPlayers.indexOf(player), 1);
   }
-
-  // addPlayer = (player: Player): void => {
-  //   this.players = [...this.players, player];
-  // };
   removePlayer = (player: Player): number => {
-    let playerMoney = player.money;
+    let playerMoney = player.money - player.initialMoney;
     if (this.isPlayerInRoom(player)) {
-      if (this.isPlayerInGame(player)) {
+      if (
+        this.isPlayerInGame(player) &&
+        !this.game.isGameEnded &&
+        this.game.getActivePlayers().length > 1
+      ) {
         this.fold(player);
         player.money = 0;
       }
@@ -103,6 +103,9 @@ export default class Room {
   };
   getCurrentPlayer = (): Player => {
     return this.game.currentPlayer;
+  };
+  getActivePlayers = (): Player[] => {
+    return this.game.getActivePlayers();
   };
   getPot = (): number => {
     return this.game.pots.reduce((acc, curr) => acc + curr, 0);

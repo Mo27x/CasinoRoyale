@@ -84,7 +84,9 @@
     }
   });
   const changeSuit = (card: any) => {
-    card.suit = "&" + card.suit + ";";
+    if (!card.suit.startsWith("&") && !card.suit.endsWith(";")) {
+      card.suit = "&" + card.suit + ";";
+    }
   };
   const changeNumber = (card: any) => {
     if (card.num == 1) card.num = "A";
@@ -103,6 +105,13 @@
   });
   socket.on("player", (data: any) => {
     player = data;
+    if (!player.plays) {
+      if (player.callAmount > 0) {
+        player.plays = ["call", "raise", "fold"];
+      } else {
+        player.plays = ["check", "bet", "fold"];
+      }
+    }
     moneyToBet = Math.ceil(player.money / 2);
   });
 
@@ -111,6 +120,8 @@
     if (player.username == user.username) {
       clearInterval(interval);
       (<HTMLProgressElement>document.getElementById("time")).value = 20;
+      (<HTMLProgressElement>document.getElementById("time")).style.accentColor =
+        "#98fb98";
     }
   };
   const fetchUser = async () => {

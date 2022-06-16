@@ -197,6 +197,7 @@ export default class Poker {
           this.nextPlayer(player);
         }
       }
+      return true;
     }
     return false;
   };
@@ -279,10 +280,14 @@ export default class Poker {
     this.players.forEach((player) => {
       if (this.isActive(player)) {
         player.callAmount = this.getCallAmount(player);
-        if (player.callAmount > 0) {
-          player.plays = ["call", "raise", "fold"];
+        if (player.callAmount == 0) {
+          if (this.canCheck) {
+            player.plays = ["check", "bet"];
+          } else {
+            player.plays = ["check", "raise"];
+          }
         } else {
-          player.plays = ["check", "bet", "fold"];
+          player.plays = ["call", "raise"];
         }
       }
     });
@@ -336,40 +341,66 @@ export default class Poker {
         activePlayers = [...activePlayers, player];
       }
     });
-    activePlayers.forEach((player) => {
-      player.handStrength = player.hand.strength(this.cards);
-      player.highestCardNums = player.hand.highCard();
-    });
-    bestHandPlayers[0] = activePlayers[0];
+    if (activePlayers.length > 0) {
+      activePlayers.forEach((player) => {
+        player.handStrength = player.hand.strength(this.cards);
+        player.highestCardNums = player.hand.highCard();
+      });
+      bestHandPlayers[0] = activePlayers[0];
 
-    for (let i = 0; i < activePlayers.length; i++) {
-      if (i != 0) {
-        if (
-          activePlayers[i].handStrength[0] > bestHandPlayers[0].handStrength[0]
-        ) {
-          bestHandPlayers[0] = activePlayers[i];
-        } else if (
-          activePlayers[i].handStrength[0] == bestHandPlayers[0].handStrength[0]
-        ) {
+      for (let i = 0; i < activePlayers.length; i++) {
+        if (i != 0) {
           if (
-            activePlayers[i].handStrength[1] >
-            bestHandPlayers[0].handStrength[1]
+            activePlayers[i].handStrength[0] >
+            bestHandPlayers[0].handStrength[0]
           ) {
             bestHandPlayers[0] = activePlayers[i];
           } else if (
-            activePlayers[i].handStrength[1] ==
-            bestHandPlayers[0].handStrength[1]
+            activePlayers[i].handStrength[0] ==
+            bestHandPlayers[0].handStrength[0]
           ) {
-            if (typeof activePlayers[2] == "number") {
-              if (
-                activePlayers[i].handStrength[2] >
-                bestHandPlayers[0].handStrength[2]
-              ) {
-                bestHandPlayers[0] = activePlayers[i];
-              } else if (
-                activePlayers[i].handStrength[2] ==
-                bestHandPlayers[0].handStrength[2]
-              ) {
+            if (
+              activePlayers[i].handStrength[1] >
+              bestHandPlayers[0].handStrength[1]
+            ) {
+              bestHandPlayers[0] = activePlayers[i];
+            } else if (
+              activePlayers[i].handStrength[1] ==
+              bestHandPlayers[0].handStrength[1]
+            ) {
+              if (typeof activePlayers[2] == "number") {
+                if (
+                  activePlayers[i].handStrength[2] >
+                  bestHandPlayers[0].handStrength[2]
+                ) {
+                  bestHandPlayers[0] = activePlayers[i];
+                } else if (
+                  activePlayers[i].handStrength[2] ==
+                  bestHandPlayers[0].handStrength[2]
+                ) {
+                  if (
+                    activePlayers[i].highestCardNums[0] >
+                    bestHandPlayers[0].highestCardNums[0]
+                  ) {
+                    bestHandPlayers[0] = activePlayers[i];
+                  } else if (
+                    activePlayers[i].highestCardNums[0] ==
+                    bestHandPlayers[0].highestCardNums[0]
+                  ) {
+                    if (
+                      activePlayers[i].highestCardNums[1] >
+                      bestHandPlayers[0].highestCardNums[1]
+                    ) {
+                      bestHandPlayers[0] = activePlayers[i];
+                    } else if (
+                      activePlayers[i].highestCardNums[1] ==
+                      bestHandPlayers[0].highestCardNums[1]
+                    ) {
+                      bestHandPlayers = [...bestHandPlayers, activePlayers[i]];
+                    }
+                  }
+                }
+              } else {
                 if (
                   activePlayers[i].highestCardNums[0] >
                   bestHandPlayers[0].highestCardNums[0]
@@ -392,37 +423,17 @@ export default class Poker {
                   }
                 }
               }
-            } else {
-              if (
-                activePlayers[i].highestCardNums[0] >
-                bestHandPlayers[0].highestCardNums[0]
-              ) {
-                bestHandPlayers[0] = activePlayers[i];
-              } else if (
-                activePlayers[i].highestCardNums[0] ==
-                bestHandPlayers[0].highestCardNums[0]
-              ) {
-                if (
-                  activePlayers[i].highestCardNums[1] >
-                  bestHandPlayers[0].highestCardNums[1]
-                ) {
-                  bestHandPlayers[0] = activePlayers[i];
-                } else if (
-                  activePlayers[i].highestCardNums[1] ==
-                  bestHandPlayers[0].highestCardNums[1]
-                ) {
-                  bestHandPlayers = [...bestHandPlayers, activePlayers[i]];
-                }
-              }
             }
           }
         }
       }
+      if (bestHandPlayers.length > 0) {
+        pot /= bestHandPlayers.length;
+        bestHandPlayers.forEach((bestHandPlayer) => {
+          bestHandPlayer.money += pot;
+        });
+      }
     }
-    pot /= bestHandPlayers.length;
-    bestHandPlayers.forEach((bestHandPlayer) => {
-      bestHandPlayer.money += pot;
-    });
     return bestHandPlayers;
   };
 }

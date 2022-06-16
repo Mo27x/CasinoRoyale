@@ -8,22 +8,10 @@ export default class Player {
   public hand!: Hand;
   public handStrength!: number[];
   public highestCardNums!: number[];
-  public bet: number;
-  private _plays: any;
-  private _callAmount: number;
-
-  public get callAmount(): number {
-    return this._callAmount;
-  }
-  public set callAmount(value: number) {
-    this._callAmount = value;
-  }
-  public get plays() {
-    return this._plays;
-  }
-  public set plays(value) {
-    this._plays = value;
-  }
+  public bet!: number;
+  public plays!: any;
+  public callAmount!: number;
+  public initialMoney!: number;
 
   public constructor(
     public readonly username: string,
@@ -36,14 +24,15 @@ export default class Player {
     this.pots = -1;
     this.bet = 0;
     this.allIn = false;
-    this.plays = undefined;
+    this.initialMoney = money;
   }
   simplify = (): any => {
     return {
       username: this.username,
       money: this.money,
-      plays: this._plays,
-      callAmount: this._callAmount,
+      plays: this.plays,
+      callAmount: this.callAmount,
+      initialMoney: this.initialMoney,
     };
   };
   getCards = (): Card[] => {

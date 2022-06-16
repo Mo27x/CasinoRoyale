@@ -222,10 +222,10 @@
             </div>
             <div class="play verticallyCenter">
               <button class="choice primary">
-                <Link to="/poker" class="link">Play</Link>
+                <Link to="poker" class="link">Play</Link>
               </button>
             </div>
-            <Route path="/poker" component={Poker} />
+            <Route path="poker" component={Poker} />
           </div>
         </div>
         <div class="game">
