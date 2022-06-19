@@ -14,7 +14,8 @@ export default class Room {
     this.addWaitingPlayersToPlayers();
     if (
       (!this.game || this.isGameEnded() || !this.isGameStarted) &&
-      this.players.length > 1
+      this.players.length > 1 &&
+      this.players.length < 7
     ) {
       this.game = new Poker(this.bigBlind, this.players);
       this.isGameStarted = true;
@@ -22,6 +23,7 @@ export default class Room {
     // this.rotateBlinds();
   };
   rotateBlinds = () => {
+    this.players = [...this.players, this.players[0]];
     const first = this.players.shift();
     this.players = [...this.players, first];
   };

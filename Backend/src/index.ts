@@ -656,8 +656,6 @@ createConnection()
             username: userData.username,
           });
           if (user.money > room.bigBlind) {
-            user.money -= money;
-            userRepository.save(user);
             socket.join(roomId);
             room.addWaitingPlayer(player);
             players = [...players, player];
@@ -736,7 +734,6 @@ createConnection()
           let room = getRoomById(player.roomId);
           if (room) {
             if (room.fold(player)) {
-              console.log(player.username + " folded");
               let user = await userRepository.findOne({
                 username: player.username,
               });
@@ -798,10 +795,12 @@ createConnection()
         let roomUsers = await io.in(room.id).fetchSockets();
         roomUsers.forEach((user) => {
           let player = getPlayerById(user.id);
-          io.to(user.id).emit("player", player.simplify());
-          io.to(user.id).emit("personalCards", player.getCards());
+          if (player) {
+            io.to(user.id).emit("player", player.simplify());
+            io.to(user.id).emit("personalCards", player.getCards());
+          }
         });
-      }, 20000);
+      }, 30000);
     };
 
     const getPlayerById = (id: string) => {

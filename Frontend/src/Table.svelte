@@ -4,6 +4,17 @@
   export let player: any;
   export let personalCards: any;
   export let username: string;
+
+  const glow = (id: string): string => {
+    document.getElementById(id).classList.add("animation-glow");
+    setTimeout(() => {
+      document.getElementById(id).classList.remove("animation-glow");
+    }, 15000);
+    return "";
+  };
+
+  if (game.winners) {
+  }
 </script>
 
 <div class="table">
@@ -25,7 +36,10 @@
     </div>
   </div>
   {#if game}
-    <div class="player player1">
+    <div class="player player1" id="player1">
+      {#if player.hasWon}
+        {glow("player1") || ""}
+      {/if}
       <div class="top">{player.username}</div>
       <div class="center player-cards">
         {#if personalCards}
@@ -41,11 +55,20 @@
     </div>
     {#each game.players as player, index}
       {#if player.username != username}
-        <div class="player player{index + 2}">
+        <div class="player player{index + 2}" id="player{index + 2}">
+          {#if player.hasWon}
+            {glow("player" + (index + 2)) || ""}
+          {/if}
           <div class="top">{player.username}</div>
           <div class="center player-cards">
-            <Card />
-            <Card />
+            {#if player.hand.cards}
+              {#each player.hand.cards as card}
+                <Card {card} />
+              {/each}
+            {:else}
+              <Card />
+              <Card />
+            {/if}
           </div>
           <div class="bottom">{player.money}</div>
         </div>
@@ -107,6 +130,19 @@
       grid-template-rows: min-content 1fr min-content;
       gap: 0px 0px;
       grid-auto-flow: row;
+    }
+
+    .animation-glow {
+      animation: glow 1s infinite alternate;
+    }
+
+    @keyframes glow {
+      from {
+        box-shadow: 0 0 1rem -1rem #fff;
+      }
+      to {
+        box-shadow: 0 0 1rem 1rem #fff;
+      }
     }
 
     .top {

@@ -7,11 +7,12 @@ export default class Player {
   public allIn!: boolean;
   public hand!: Hand;
   public handStrength!: number[];
-  public highestCardNums!: number[];
+  public highestCardsNum!: number[];
   public bet!: number;
   public plays!: any;
   public callAmount!: number;
   public initialMoney!: number;
+  private _hasWon: boolean = false;
 
   public constructor(
     public readonly username: string,
@@ -26,6 +27,14 @@ export default class Player {
     this.allIn = false;
     this.initialMoney = money;
   }
+
+  public get hasWon(): boolean {
+    return this._hasWon;
+  }
+  public set hasWon(value: boolean) {
+    this._hasWon = value;
+  }
+
   simplify = (): any => {
     return {
       username: this.username,
@@ -33,6 +42,8 @@ export default class Player {
       plays: this.plays,
       callAmount: this.callAmount,
       initialMoney: this.initialMoney,
+      hasWon: this._hasWon,
+      hand: { cards: undefined },
     };
   };
   getCards = (): Card[] => {

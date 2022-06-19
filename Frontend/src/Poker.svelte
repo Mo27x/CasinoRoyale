@@ -71,6 +71,19 @@
         });
       }
       if (game.isGameEnded) {
+        game.winners.forEach((potWinners: any) => {
+          potWinners.forEach((winner: any) => {
+            if (winner.username != user.username) {
+              winner.hand.cards.forEach((card: any) => {
+                changeSuit(card);
+                changeNumber(card);
+              });
+              game.players.forEach((player) => {
+                player.hand.cards = winner.hand.cards;
+              });
+            }
+          });
+        });
         clearInterval(interval);
         if (<HTMLProgressElement>document.getElementById("time")) {
           (<HTMLProgressElement>document.getElementById("time")).value = 20;

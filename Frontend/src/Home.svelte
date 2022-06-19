@@ -230,9 +230,9 @@
         </div>
         <div class="game">
           <div class="name">Blackjack</div>
-          <div class="top-left-margin">How much you wanna play with?</div>
+          <!-- <div class="top-left-margin">How much you wanna play with?</div> -->
           <div class="center">
-            <div>
+            <!-- <div>
               <input
                 type="range"
                 name="money"
@@ -243,22 +243,23 @@
                 bind:value={blackjackMoney}
               />
             </div>
-            <div><output for="money" id="output">{blackjackMoney}</output></div>
+            <div><output for="money" id="output">{blackjackMoney}</output></div> -->
+            Coming soon :)
           </div>
-          <div class="container">
+          <!-- <div class="container">
             <div class="tutorial verticallyCenter">
               <button class="choice">Tutorial</button>
             </div>
             <div class="play verticallyCenter">
               <button class="choice primary">Play</button>
             </div>
-          </div>
+          </div> -->
         </div>
         <div class="game">
           <div class="name">Trade</div>
-          <div class="top-left-margin">How much you wanna play with?</div>
+          <!-- <div class="top-left-margin">How much you wanna play with?</div> -->
           <div class="center">
-            <div>
+            <!-- <div>
               <input
                 type="range"
                 name="money"
@@ -269,16 +270,17 @@
                 bind:value={tradeMoney}
               />
             </div>
-            <div><output for="money" id="output">{tradeMoney}</output></div>
+            <div><output for="money" id="output">{tradeMoney}</output></div> -->
+            Coming soon :)
           </div>
-          <div class="container">
+          <!-- <div class="container">
             <div class="tutorial verticallyCenter">
               <button class="choice">Tutorial</button>
             </div>
             <div class="play verticallyCenter">
               <button class="choice primary">Play</button>
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
