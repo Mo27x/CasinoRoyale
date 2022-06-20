@@ -46,7 +46,7 @@
 </div>
 
 <style>
-  @media screen and (max-width: 660px) {
+  /* @media screen and (max-width: 660px) { */
     :global(a) {
       text-decoration: none;
     }
@@ -83,5 +83,5 @@
     .selected {
       text-decoration: underline 0.25rem;
     }
-  }
+  /* } */
 </style>

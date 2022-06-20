@@ -46,7 +46,16 @@
     if (data.success) {
       window.location.pathname = "/";
     } else {
-      alert(data.message);
+      if (data.errors) {
+        data.errors.forEach((error) => {
+          if (error.param == "email") {
+            document.getElementById("email-error").innerHTML = error.msg;
+          }
+          if (error.param == "password") {
+            document.getElementById("password-error").innerHTML = error.msg;
+          }
+        });
+      }
     }
   };
 
@@ -62,7 +71,29 @@
     if (data.success) {
       window.location.pathname = "/";
     } else {
-      alert(data.message);
+      if (data.errors) {
+        data.errors.forEach((error: any) => {
+          if (error.param == "username") {
+            document.getElementById("username-error").innerHTML = error.msg;
+          }
+          if (error.param == "email") {
+            document.getElementById("email-error").innerHTML = error.msg;
+          }
+          if (error.param == "password") {
+            document.getElementById("password-error").innerHTML = error.msg;
+          }
+          if (error.param == "passwordConfirm") {
+            document.getElementById("passwordConfirm-error").innerHTML =
+              error.msg;
+          }
+        });
+      }
+    }
+  };
+
+  const deleteError = (id: string) => {
+    if (document.getElementById(id)) {
+      document.getElementById(id).innerHTML = "";
     }
   };
   userData.subscribe((data) => {
@@ -110,8 +141,10 @@
               pattern="[^\s]+"
               required
               bind:value={signUpData.username}
+              on:change={() => deleteError("username-error")}
             />
           </div>
+          <div class="error" id="username-error" />
         </div>
         <div class="insert">
           <label for="email">Email</label>
@@ -122,32 +155,38 @@
               id="email"
               required
               bind:value={signUpData.email}
+              on:change={() => deleteError("email-error")}
             />
           </div>
+          <div class="error" id="email-error" />
         </div>
         <div class="insert">
-          <label for="passwd">Password</label>
+          <label for="password">Password</label>
           <div>
             <input
               type="password"
-              name="passwd"
-              id="passwd"
+              name="password"
+              id="password"
               required
               bind:value={signUpData.password}
+              on:change={() => deleteError("password-error")}
             />
           </div>
+          <div class="error" id="password-error" />
         </div>
         <div class="insert">
-          <label for="passwdConfirm">Confirm Password</label>
+          <label for="passwordConfirm">Confirm Password</label>
           <div>
             <input
               type="password"
-              name="passwdConfirm"
-              id="passwdConfirm"
+              name="passwordConfirm"
+              id="passwordConfirm"
               required
               bind:value={signUpData.passwordConfirm}
+              on:change={() => deleteError("passwordConfirm-error")}
             />
           </div>
+          <div class="error" id="passwordConfirm-errors" />
         </div>
         <div class="right">
           <button class="submit" on:click={() => signUp()}>Create</button>
@@ -173,8 +212,10 @@
               id="email"
               required
               bind:value={loginData.email}
+              on:change={() => deleteError("email-error")}
             />
           </div>
+          <div class="error" id="email-error" />
         </div>
         <div class="insert">
           <label for="passwd">Password</label>
@@ -185,8 +226,10 @@
               id="passwd"
               required
               bind:value={loginData.password}
+              on:change={() => deleteError("password-error")}
             />
           </div>
+          <div class="error" id="password-error" />
         </div>
         <div><a href="#" class="none">Forgot password?</a></div>
         <div class="right">
@@ -205,7 +248,7 @@
       <div class="center-items">
         <div class="space-between">
           <div class="sayHi">Hi {user.username}</div>
-          <div><button class="daily_prize">Daily Prize</button></div>
+          <div class="streak">Your streak is: {user.streak}</div>
         </div>
       </div>
       <div class="games">
@@ -353,6 +396,12 @@
     color: #eeeeee;
     caret-color: #eeeeee;
   }
+
+  .error {
+    color: #ff0000;
+    font-size: 0.8rem;
+    margin: 0.5rem 0 0.5rem 0;
+  }
   button.submit {
     font-family: "Play";
     font-size: 12pt;
@@ -397,11 +446,10 @@
     text-align: center;
   }
 
-  .daily_prize {
+  .streak {
     font-size: 12pt;
     width: 7.5rem;
     height: 1.75rem;
-    background-color: #5a5867;
     border-color: transparent;
     color: #eeeeee;
     border-radius: 0.5rem;

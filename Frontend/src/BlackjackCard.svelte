@@ -22,7 +22,6 @@
   if (!card.suit.startsWith("&") && !card.suit.endsWith(";")) {
     card.suit = "&" + card.suit + ";";
   }
-  console.log(card);
 </script>
 
 {#if card.suit != "" && card.rank.value != -1}

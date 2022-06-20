@@ -10,6 +10,10 @@ export default class Hand {
   private _hasWon: boolean = false;
   private _isPush: boolean = false;
   private _canInsure: boolean = false;
+  private _id: string;
+  public get id(): string {
+    return this._id;
+  }
   public get canInsure(): boolean {
     return this._canInsure;
   }
@@ -18,6 +22,7 @@ export default class Hand {
   }
 
   constructor() {
+    this._id = Math.random().toString(36).substring(2, 15);
     this.cards = [];
     this.bet = 0;
     this.hasStood = false;
@@ -106,6 +111,7 @@ export default class Hand {
   canSplit = (): boolean => {
     return (
       this.cards.length === 2 &&
+      this.firstCard.rank.name === this.cards[1].rank.name &&
       this.firstCard.rank.value === this.cards[1].rank.value &&
       !this.hasStood &&
       !this.isBlackjack
@@ -162,6 +168,7 @@ export default class Hand {
       isBlackjack: this.isBlackjack,
       actions: this.actions,
       value: this.value,
+      id: this._id,
     };
   };
 }

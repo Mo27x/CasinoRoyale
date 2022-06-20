@@ -327,7 +327,7 @@ export default class Poker {
       players: simplifiedPlayers,
       winners: this.isGameEnded ? simplifiedWinners : undefined,
       cards: this.cards ? this.cards : undefined,
-      currentPlayer: this.currentPlayer.simplify(),
+      currentPlayer: this.currentPlayer ? this.currentPlayer.simplify() : {},
       pot: this.pots.reduce((acc, curr) => acc + curr, 0),
       isGameEnded: this.isGameEnded,
     };

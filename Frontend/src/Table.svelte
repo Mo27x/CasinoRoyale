@@ -75,131 +75,131 @@
 </div>
 
 <style>
-  @media only screen and (max-width: 640px) {
-    .table {
-      display: grid;
-      grid-auto-columns: 1fr;
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: 1fr 1fr min-content 1fr 1fr;
-      gap: 0px 0px;
-      grid-auto-flow: row;
-      height: 100%;
-      width: 97%;
-      background-color: #35654d;
-      border: 0.2rem solid #212121;
-      place-items: center;
-      border-radius: 8.5rem;
-    }
+  /* @media only screen and (max-width: 640px) { */
+  .table {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr min-content 1fr 1fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    height: 100%;
+    width: 97%;
+    background-color: #35654d;
+    border: 0.2rem solid #212121;
+    place-items: center;
+    border-radius: 8.5rem;
+  }
 
-    .card-place {
-      grid-area: 3 / 1 / 4 / 4;
-      display: grid;
-      place-items: center;
-    }
+  .card-place {
+    grid-area: 3 / 1 / 4 / 4;
+    display: grid;
+    place-items: center;
+  }
 
-    .pot {
-      display: grid;
-      place-items: center;
-      grid-area: 2/2/3/3;
-      font-size: 14pt;
-    }
+  .pot {
+    display: grid;
+    place-items: center;
+    grid-area: 2/2/3/3;
+    font-size: 14pt;
+  }
 
-    .cards {
-      height: 4rem;
-      width: 110%;
-      text-align: center;
-      border: 0.2rem solid #006338;
-      border-radius: 0.2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-evenly;
-      height: max-content;
-    }
+  .cards {
+    height: 4rem;
+    width: 110%;
+    text-align: center;
+    border: 0.2rem solid #006338;
+    border-radius: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    height: max-content;
+  }
 
-    .player {
-      font-size: 14pt;
-      text-align: center;
-      background-color: #3e9469;
-      border: 0.2rem solid #006338;
-      border-radius: 0.5rem;
-      display: grid;
-      grid-template-columns: 1fr;
-      grid-template-rows: min-content 1fr min-content;
-      gap: 0px 0px;
-      grid-auto-flow: row;
-    }
+  .player {
+    font-size: 14pt;
+    text-align: center;
+    background-color: #3e9469;
+    border: 0.2rem solid #006338;
+    border-radius: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: min-content 1fr min-content;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+  }
 
-    .animation-glow {
-      animation: glow 1s infinite alternate;
-    }
+  .animation-glow {
+    animation: glow 1s infinite alternate;
+  }
 
-    @keyframes glow {
-      from {
-        box-shadow: 0 0 1rem -1rem #fff;
-      }
-      to {
-        box-shadow: 0 0 1rem 1rem #fff;
-      }
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 1rem -1rem #fff;
     }
-
-    .top {
-      grid-area: 1/1/2/2;
-    }
-
-    .center {
-      grid-area: 2/1/3/1;
-    }
-
-    .bottom {
-      grid-area: 3/1/4/2;
-    }
-
-    .player1 {
-      grid-area: 5 / 2 / 6 / 3;
-      width: 96%;
-      height: 96%;
-      height: max-content;
-    }
-
-    .player2 {
-      grid-area: 4 / 1 / 5 / 2;
-      width: 96%;
-      height: 96%;
-      height: max-content;
-    }
-
-    .player3 {
-      grid-area: 2 / 1 / 3 / 2;
-      width: 96%;
-      height: 96%;
-      height: max-content;
-    }
-
-    .player4 {
-      grid-area: 1 / 2 / 2 / 3;
-      width: 96%;
-      height: 96%;
-      height: max-content;
-    }
-
-    .player5 {
-      grid-area: 2 / 3 / 3 / 4;
-      width: 96%;
-      height: 96%;
-      height: max-content;
-    }
-
-    .player6 {
-      grid-area: 4 / 3 / 5 / 4;
-      width: 96%;
-      height: 96%;
-      height: max-content;
-    }
-
-    .player-cards {
-      display: flex;
-      justify-content: space-evenly;
-      align-items: center;
+    to {
+      box-shadow: 0 0 1rem 1rem #fff;
     }
   }
+
+  .top {
+    grid-area: 1/1/2/2;
+  }
+
+  .center {
+    grid-area: 2/1/3/1;
+  }
+
+  .bottom {
+    grid-area: 3/1/4/2;
+  }
+
+  .player1 {
+    grid-area: 5 / 2 / 6 / 3;
+    width: 96%;
+    height: 96%;
+    height: max-content;
+  }
+
+  .player2 {
+    grid-area: 4 / 1 / 5 / 2;
+    width: 96%;
+    height: 96%;
+    height: max-content;
+  }
+
+  .player3 {
+    grid-area: 2 / 1 / 3 / 2;
+    width: 96%;
+    height: 96%;
+    height: max-content;
+  }
+
+  .player4 {
+    grid-area: 1 / 2 / 2 / 3;
+    width: 96%;
+    height: 96%;
+    height: max-content;
+  }
+
+  .player5 {
+    grid-area: 2 / 3 / 3 / 4;
+    width: 96%;
+    height: 96%;
+    height: max-content;
+  }
+
+  .player6 {
+    grid-area: 4 / 3 / 5 / 4;
+    width: 96%;
+    height: 96%;
+    height: max-content;
+  }
+
+  .player-cards {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+  }
+  /* } */
 </style>

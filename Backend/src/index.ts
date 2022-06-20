@@ -93,7 +93,7 @@ createConnection()
     const getDailyPrize = async (username: string) => {
       const user = await userRepository.findOne({ username: username });
       if (user) {
-        const time = user.lastAccess.getTime() - Date.now();
+        const time = Date.now() - user.lastAccess.getTime();
         const hours = time / 1000 / 60 / 60;
         if (hours >= 24) {
           if (hours < 48) {
@@ -531,7 +531,7 @@ createConnection()
       async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-          res.status(400).json({ errors: errors.array() });
+          return res.status(400).json({ errors: errors.array() });
         } else {
           if (typeof req.body != "undefined") {
             let user = await userRepository.findOne({
@@ -565,10 +565,21 @@ createConnection()
                   })
                   .status(200)
                   .json({ success: true });
+              } else {
+                return res.status(401).json({
+                  success: false,
+                  errors: [
+                    { param: "password", msg: "Password is not correct" },
+                  ],
+                });
               }
             }
           } else {
-            res.status(405).json({ success: false, message: "No body" });
+            res.status(405).json({
+              success: false,
+              message: "No body",
+              errors: errors.array(),
+            });
           }
         }
       }
@@ -594,32 +605,22 @@ createConnection()
       async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-          res.status(400).json({ errors: errors.array() });
+          return res.status(400).json({ errors: errors.array() });
         } else {
           let user = new User();
           req.body.password = createHash("sha256")
             .update(req.body.password)
             .digest("hex");
           if (typeof req.body != "undefined") {
-            let uPlayer = await userRepository.findOne({
-              username: req.body.username,
-            });
-            let ePlayer = await userRepository.findOne({
-              email: req.body.email,
-            });
-            if (!uPlayer && !ePlayer) {
-              user.username = req.body.username;
-              user.email = req.body.email;
-              user.password = req.body.password;
-              user.money = 1000000;
-              user.lastAccess = new Date(Date.now());
-              user.streak = 1;
-              user.requests = [];
-              user.responses = [];
-              userRepository.save(user);
-            } else {
-              return res.send("Email or Username already exists");
-            }
+            user.username = req.body.username;
+            user.email = req.body.email;
+            user.password = req.body.password;
+            user.money = 50000;
+            user.lastAccess = new Date(Date.now());
+            user.streak = 1;
+            user.requests = [];
+            user.responses = [];
+            userRepository.save(user);
           } else {
             return res.status(404);
           }
@@ -684,6 +685,11 @@ createConnection()
         }
       });
       socket.on("leaveRoom", async () => {
+        await leavePoker();
+        await leaveBlackjack();
+      });
+
+      const leavePoker = async () => {
         let player = getPokerPlayerById(socket.id);
         if (player) {
           let room = getPokerRoomById(player.roomId);
@@ -700,8 +706,7 @@ createConnection()
             }
           }
         }
-      });
-
+      };
       socket.on("check", async () => {
         let player = getPokerPlayerById(socket.id);
         if (player) {
@@ -770,18 +775,25 @@ createConnection()
             room.addWaitingPlayer(player);
             BlackjackPlayers = [...BlackjackPlayers, player];
             if (room.getPlayerWithMoney().length >= 1 && !room.isGameStarted) {
-              room.startGame();
-              io.in(room.id).emit("blackjackGame", room.getSimplifiedGame());
+              startBlackjackGameAfterDelay(room);
             }
           }
         } else {
+          player.isPlaying = true;
           let room = getBlackjackRoomById(player.roomId);
           if (room && room.isPlayerInGame(player) && !room.isGameEnded) {
             io.in(room.id).emit("blackjackGame", room.getSimplifiedGame());
+          } else {
+            if (
+              room.getPlayerWithMoney().length >= 1 &&
+              (!room.isGameStarted || room.isGameEnded)
+            ) {
+              startBlackjackGameAfterDelay(room);
+            }
           }
         }
       });
-      socket.on("leaveBlackjack", async () => {
+      const leaveBlackjack = async () => {
         let player = getBlackjackPlayerById(socket.id);
         if (player) {
           let room = getBlackjackRoomById(player.roomId);
@@ -798,7 +810,7 @@ createConnection()
             }
           }
         }
-      });
+      };
 
       socket.on("hit", async () => {
         let player = getBlackjackPlayerById(socket.id);
@@ -937,12 +949,6 @@ createConnection()
       setTimeout(async () => {
         room.startGame();
         io.in(room.id).emit("blackjackGame", room.getSimplifiedGame());
-        let roomUsers = await io.in(room.id).fetchSockets();
-        roomUsers.forEach((user) => {
-          let player = getBlackjackPlayerById(user.id);
-          if (player) {
-          }
-        });
       }, 10000);
     };
 

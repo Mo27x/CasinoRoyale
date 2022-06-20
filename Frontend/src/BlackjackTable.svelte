@@ -26,15 +26,27 @@
         <div class="player-name">{username}</div>
         <div class="hands">
           {#each player.hands as hand}
-            <div class="hand">
-              <div class="cards">
-                {#each hand.cards as card}
-                  <Card {card} />
-                {/each}
+            {#if player.currentHand.id == hand.id}
+              <div class="hand current">
+                <div class="cards">
+                  {#each hand.cards as card}
+                    <Card {card} />
+                  {/each}
+                </div>
+                <div class="value">Hand value: {hand.value}</div>
+                <div class="bet">Bet: {hand.bet}</div>
               </div>
-              <div class="value">Hand value: {hand.value}</div>
-              <div class="bet">Bet: {hand.bet}</div>
-            </div>
+            {:else}
+              <div class="hand">
+                <div class="cards">
+                  {#each hand.cards as card}
+                    <Card {card} />
+                  {/each}
+                </div>
+                <div class="value">Hand value: {hand.value}</div>
+                <div class="bet">Bet: {hand.bet}</div>
+              </div>
+            {/if}
             <div class="money">Money: {player.money}</div>
           {/each}
         </div>
@@ -101,8 +113,12 @@
   }
   .hand {
     border: 0.2rem solid #592c28;
+    border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;
   }
-
+  .current {
+    border: 0.2rem solid #eee8aa;
+    border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;
+  }
   .bet-box {
     width: 2.4rem;
     height: 3.6rem;

@@ -83,13 +83,13 @@
           });
           if (gamePlayer.name === user.username) {
             player = gamePlayer;
-            console.log(player.currentHand.actions);
           }
         });
         game.players.splice(game.players.indexOf(player), 1);
       }
       if (game.isGameEnded) {
         clearInterval(interval);
+        hasSentStartGame = false;
         timer = false;
         if (<HTMLProgressElement>document.getElementById("time")) {
           (<HTMLProgressElement>document.getElementById("time")).value = 20;
@@ -187,6 +187,24 @@
           {action}
         </button>
       {/each}
+    {/if}
+    {#if game && game.isGameEnded}
+      <div>Bet</div>
+      <div>
+        <input
+          type="range"
+          name="money"
+          id="money"
+          min="100"
+          bind:value={initialBet}
+          max={gameMoney}
+          step="100"
+        />
+      </div>
+      <div><output for="money">{initialBet}</output></div>
+      <div>
+        <button on:click={() => startGame()}>Start Game</button>
+      </div>
     {/if}
   </div>
 </div>

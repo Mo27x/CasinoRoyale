@@ -89,7 +89,7 @@
 </div>
 
 <style>
-  @media only screen and (max-width: 600px) {
+  /* @media only screen and (max-width: 600px) { */
     .history {
       font-size: 20pt;
     }
@@ -137,5 +137,5 @@
       margin: 0;
       padding: 0;
     }
-  }
+  /* } */
 </style>

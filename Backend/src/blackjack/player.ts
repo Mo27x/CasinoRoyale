@@ -4,6 +4,13 @@ export default class BlackjackPlayer {
   private _hands!: Hand[];
   private _money!: number;
   private _currentHand!: Hand;
+  private _isPlaying: boolean = true;
+  public get isPlaying(): boolean {
+    return this._isPlaying;
+  }
+  public set isPlaying(value: boolean) {
+    this._isPlaying = value;
+  }
   constructor(
     public readonly name: string,
     public initialMoney: number,

@@ -45,11 +45,15 @@ export default class BlackjackRoom {
   getPlayerWithMoney(): BlackjackPlayer[] {
     this._waitingPlayers.forEach((waitingPlayer) => {
       this._players =
-        !this._players.includes(waitingPlayer) && waitingPlayer.initialMoney > 0
+        !this._players.includes(waitingPlayer) &&
+        waitingPlayer.initialMoney > 0 &&
+        waitingPlayer.isPlaying
           ? [...this._players, waitingPlayer]
           : this._players;
     });
-    this._players = this._players.filter((player) => player.initialMoney > 0);
+    this._players = this._players.filter(
+      (player) => player.initialMoney > 0 && player.isPlaying
+    );
     return this._players;
   }
 

@@ -30,6 +30,7 @@ export default class Blackjack {
       player.hands[handIndex].bet = 0;
       return false;
     }
+    player.isPlaying = false;
     return true;
   }
 
@@ -104,12 +105,14 @@ export default class Blackjack {
       player === this.currentPlayer &&
       !player.currentHand.hasSurrendered &&
       !player.currentHand.hasStood &&
-      player.currentHand.cards[0].rank.value ===
+      player.currentHand.cards[0].rank.name ==
+        player.currentHand.cards[1].rank.name &&
+      player.currentHand.cards[0].rank.value ==
         player.currentHand.cards[1].rank.value &&
       player.money >= player.currentHand.bet
     ) {
       const hand = new Hand();
-      player.hands.push(hand);
+      player.hands = [...player.hands, hand];
       hand.cards = [player.currentHand.cards[1], this._deck.deal()];
       player.bet(player.currentHand.bet, player.hands.indexOf(hand));
       hand.bet = player.currentHand.bet;
@@ -122,7 +125,6 @@ export default class Blackjack {
   surrender = (player: BlackjackPlayer): boolean => {
     if (
       this.isPlayerInGame(player) &&
-      player === this.currentPlayer &&
       !player.currentHand.hasStood &&
       !player.currentHand.hasSurrendered
     ) {
@@ -266,6 +268,9 @@ export default class Blackjack {
             }
           });
         }
+      });
+      this.players.forEach((player) => {
+        player.isPlaying = false;
       });
       this._isGameEnded = true;
     }
