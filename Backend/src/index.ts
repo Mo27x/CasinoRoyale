@@ -639,17 +639,8 @@ createConnection()
       console.log("a user connected");
       socket.on("disconnect", () => {
         console.log("a user disconnected");
-        let player = getPokerPlayerById(socket.id);
-        if (player) {
-          let room = getPokerRoomById(player.roomId);
-          if (room) {
-            room.removePlayer(player);
-            if (room.players.length == 0) {
-              deletePokerRoom(room);
-            }
-            players.splice(players.indexOf(player), 1);
-          }
-        }
+        leaveBlackjack();
+        leavePoker();
       });
       socket.on("poker", async (userData, money) => {
         let player = getPokerPlayerById(socket.id);
@@ -705,6 +696,9 @@ createConnection()
               deletePokerRoom(room);
             }
           }
+          players = players.filter((player) => player.id != socket.id);
+          socket.leave(player.roomId);
+          player.roomId = "";
         }
       };
       socket.on("check", async () => {
@@ -809,6 +803,11 @@ createConnection()
               deleteBlackjackRoom(room);
             }
           }
+          BlackjackPlayers = BlackjackPlayers.filter(
+            (player) => player.id != socket.id
+          );
+          socket.leave(player.roomId);
+          player.roomId = "";
         }
       };
 

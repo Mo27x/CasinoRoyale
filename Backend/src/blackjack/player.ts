@@ -15,7 +15,7 @@ export default class BlackjackPlayer {
     public readonly name: string,
     public initialMoney: number,
     public readonly id: string,
-    public readonly roomId: string,
+    public roomId: string,
     public readonly initialBet: number
   ) {
     this.hands = [new Hand()];

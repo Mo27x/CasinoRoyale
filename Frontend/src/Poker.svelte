@@ -11,6 +11,7 @@
   let play = "";
   let player: any;
   let interval: any;
+  let timer = false;
   $: username = user.username;
 
   pokerGameMoney.subscribe((value) => {
@@ -29,8 +30,13 @@
     let time = (<HTMLProgressElement>document.getElementById("time")).value;
     if (time <= 0) {
       clearInterval(interval);
-      (<HTMLProgressElement>document.getElementById("time")).style.accentColor =
-        "#973838";
+      timer = false;
+      if (<HTMLProgressElement>document.getElementById("time")) {
+        (<HTMLProgressElement>document.getElementById("time")).value = 20;
+        (<HTMLProgressElement>(
+          document.getElementById("time")
+        )).style.accentColor = "#98fb98";
+      }
       sendPlay("fold");
     } else {
       (<HTMLProgressElement>document.getElementById("time")).value -= 1;
@@ -47,7 +53,7 @@
   };
 
   const changeAmount = (amount: number) => {
-    gameMoney = amount;
+    moneyToBet = amount;
   };
 
   const startGame = (money: number) => {
@@ -93,8 +99,26 @@
         }
         fetchUser();
       }
-      if (game.currentPlayer.username == user.username && !game.isGameEnded) {
+      if (
+        game.currentPlayer &&
+        game.currentPlayer.username == user.username &&
+        !game.isGameEnded &&
+        !timer
+      ) {
         interval = setInterval(progress, 1000);
+        timer = true;
+      } else {
+        clearInterval(interval);
+        timer = false;
+        if (<HTMLProgressElement>document.getElementById("time")) {
+          (<HTMLProgressElement>document.getElementById("time")).value = 20;
+          (<HTMLProgressElement>(
+            document.getElementById("time")
+          )).style.accentColor = "#98fb98";
+        }
+      }
+      if (game.isGameEnded && (!player.money || player.money < 200)) {
+        window.location.href = "/";
       }
     }
   });
@@ -186,7 +210,7 @@
           <div class="detailed">
             <div class="left">
               <div class="top">Your {play}</div>
-              <div class="bottom">{gameMoney}</div>
+              <div class="bottom">{moneyToBet}</div>
             </div>
 
             <div class="center">

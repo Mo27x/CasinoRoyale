@@ -54,6 +54,7 @@ export default class BlackjackRoom {
     this._players = this._players.filter(
       (player) => player.initialMoney > 0 && player.isPlaying
     );
+    this._waitingPlayers = [];
     return this._players;
   }
 

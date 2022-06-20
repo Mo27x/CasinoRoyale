@@ -151,23 +151,6 @@
   <div class="table-place">
     {#if game}
       <BlackjackTable {game} {username} {player} />
-    {:else if !hasSentStartGame}
-      <div>Bet</div>
-      <div>
-        <input
-          type="range"
-          name="money"
-          id="money"
-          min="100"
-          bind:value={initialBet}
-          max={gameMoney}
-          step="100"
-        />
-      </div>
-      <div><output for="money">{initialBet}</output></div>
-      <div>
-        <button on:click={() => startGame()}>Start Game</button>
-      </div>
     {:else if hasSentStartGame}
       <div class="center">
         <img src="./icons/casinoroyale.jpg" alt="Logo" class="waiting" />
@@ -188,7 +171,7 @@
         </button>
       {/each}
     {/if}
-    {#if game && game.isGameEnded}
+    {#if (game && game.isGameEnded) || !game || !hasSentStartGame}
       <div>Bet</div>
       <div>
         <input
@@ -273,17 +256,23 @@
   }
 
   button {
-    width: max-content;
-    height: 3rem;
     border: none;
-    background-color: #333;
+    background: none;
+    color: #eeeeee;
+    font-size: 12pt;
+    height: 2rem;
+    background-color: #5a5867;
     border-radius: 0.5rem;
-    font-size: 14pt;
-    cursor: pointer;
+    width: max-content;
   }
 
   #time {
-    width: 90%;
-    accent-color: palegreen;
+    accent-color: #98fb98;
+    width: 95%;
+  }
+
+  input[type="range"] {
+    accent-color: #ffae82;
+    width: 95%;
   }
 </style>

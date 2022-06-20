@@ -52,6 +52,7 @@ export default class PokerRoom {
           : this.waitingPlayers;
       }
     });
+    this.waitingPlayers = [];
   }
   public get waitingPlayers(): Player[] {
     return this._waitingPlayers;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Router, Link, Route } from "svelte-navigator";
+  import { Router, Link, Route, useParams } from "svelte-navigator";
   import {
     pokerGameMoney,
     blackjackGameMoney,
@@ -23,12 +23,23 @@
     passwordConfirm: "",
   };
 
+  let loginErrors = {
+    email: "",
+    password: "",
+  };
+
+  let signUpErrors = {
+    username: "",
+    email: "",
+    password: "",
+    passwordConfirm: "",
+  };
+
   const changeMode = () => {
     isLoggingIn = !isLoggingIn;
   };
   let pokerMoney = user ? Math.ceil(user.money / 10) : 0;
   let blackjackMoney = user ? Math.ceil(user.money / 10) : 0;
-  let tradeMoney = user ? user.money / 2 : 0;
 
   const login = async () => {
     let response = await fetch("/api/login", {
@@ -49,9 +60,11 @@
       if (data.errors) {
         data.errors.forEach((error) => {
           if (error.param == "email") {
+            loginErrors.email = error.msg;
             document.getElementById("email-error").innerHTML = error.msg;
           }
           if (error.param == "password") {
+            loginErrors.password = error.msg;
             document.getElementById("password-error").innerHTML = error.msg;
           }
         });
@@ -74,15 +87,19 @@
       if (data.errors) {
         data.errors.forEach((error: any) => {
           if (error.param == "username") {
+            signUpErrors.username = error.msg;
             document.getElementById("username-error").innerHTML = error.msg;
           }
           if (error.param == "email") {
+            signUpErrors.email = error.msg;
             document.getElementById("email-error").innerHTML = error.msg;
           }
           if (error.param == "password") {
+            signUpErrors.password = error.msg;
             document.getElementById("password-error").innerHTML = error.msg;
           }
           if (error.param == "passwordConfirm") {
+            signUpErrors.passwordConfirm = error.msg;
             document.getElementById("passwordConfirm-error").innerHTML =
               error.msg;
           }
@@ -91,10 +108,8 @@
     }
   };
 
-  const deleteError = (id: string) => {
-    if (document.getElementById(id)) {
-      document.getElementById(id).innerHTML = "";
-    }
+  const deleteError = (error: string) => {
+    error = "";
   };
   userData.subscribe((data) => {
     user = data;
@@ -141,10 +156,10 @@
               pattern="[^\s]+"
               required
               bind:value={signUpData.username}
-              on:change={() => deleteError("username-error")}
+              on:input={() => deleteError(signUpErrors.username)}
             />
           </div>
-          <div class="error" id="username-error" />
+          <div class="error" id="username-error">{signUpErrors.username}</div>
         </div>
         <div class="insert">
           <label for="email">Email</label>
@@ -155,10 +170,10 @@
               id="email"
               required
               bind:value={signUpData.email}
-              on:change={() => deleteError("email-error")}
+              on:input={() => deleteError(signUpErrors.email)}
             />
           </div>
-          <div class="error" id="email-error" />
+          <div class="error" id="email-error">{signUpErrors.email}</div>
         </div>
         <div class="insert">
           <label for="password">Password</label>
@@ -169,10 +184,10 @@
               id="password"
               required
               bind:value={signUpData.password}
-              on:change={() => deleteError("password-error")}
+              on:input={() => deleteError(signUpErrors.password)}
             />
           </div>
-          <div class="error" id="password-error" />
+          <div class="error" id="password-error">{signUpErrors.password}</div>
         </div>
         <div class="insert">
           <label for="passwordConfirm">Confirm Password</label>
@@ -183,10 +198,12 @@
               id="passwordConfirm"
               required
               bind:value={signUpData.passwordConfirm}
-              on:change={() => deleteError("passwordConfirm-error")}
+              on:input={() => deleteError(signUpErrors.passwordConfirm)}
             />
           </div>
-          <div class="error" id="passwordConfirm-errors" />
+          <div class="error" id="passwordConfirm-errors">
+            {signUpErrors.passwordConfirm}
+          </div>
         </div>
         <div class="right">
           <button class="submit" on:click={() => signUp()}>Create</button>
@@ -212,10 +229,10 @@
               id="email"
               required
               bind:value={loginData.email}
-              on:change={() => deleteError("email-error")}
+              on:input={() => deleteError(loginErrors.email)}
             />
           </div>
-          <div class="error" id="email-error" />
+          <div class="error" id="email-error">{loginErrors.email}</div>
         </div>
         <div class="insert">
           <label for="passwd">Password</label>
@@ -226,10 +243,10 @@
               id="passwd"
               required
               bind:value={loginData.password}
-              on:change={() => deleteError("password-error")}
+              on:input={() => deleteError(loginErrors.password)}
             />
           </div>
-          <div class="error" id="password-error" />
+          <div class="error" id="password-error">{loginErrors.password}</div>
         </div>
         <div><a href="#" class="none">Forgot password?</a></div>
         <div class="right">
@@ -254,7 +271,9 @@
       <div class="games">
         <div class="game">
           <div class="name">Poker</div>
-          <div class="top-left-margin">How much you wanna play with?</div>
+          <div class="center-items">
+            <div class="space-between">How much you wanna play with?</div>
+          </div>
           <div class="center">
             <div>
               <input
@@ -283,7 +302,9 @@
         </div>
         <div class="game">
           <div class="name">Blackjack</div>
-          <div class="top-left-margin">How much you wanna play with?</div>
+          <div class="center-items">
+            <div class="space-between">How much you wanna play with?</div>
+          </div>
           <div class="center">
             <div>
               <input
@@ -310,33 +331,6 @@
             </div>
           </div>
         </div>
-        <div class="game">
-          <div class="name">Trade</div>
-          <!-- <div class="top-left-margin">How much you wanna play with?</div> -->
-          <div class="center">
-            <!-- <div>
-              <input
-                type="range"
-                name="money"
-                id="money"
-                min="200"
-                max={user.money}
-                step="100"
-                bind:value={tradeMoney}
-              />
-            </div>
-            <div><output for="money" id="output">{tradeMoney}</output></div> -->
-            Coming soon :)
-          </div>
-          <!-- <div class="container">
-            <div class="tutorial verticallyCenter">
-              <button class="choice">Tutorial</button>
-            </div>
-            <div class="play verticallyCenter">
-              <button class="choice primary">Play</button>
-            </div>
-          </div> -->
-        </div>
       </div>
     </div>
   </Router>
@@ -346,6 +340,7 @@
   /* @media screen and (max-width: 660px) { */
   :global(a) {
     text-decoration: none;
+    all: none;
     color: #eeeeee;
   }
   .welcome {
