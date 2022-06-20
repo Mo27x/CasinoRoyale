@@ -2,7 +2,7 @@ import Card from "./card";
 import Player from "./player";
 import Poker from "./poker";
 
-export default class Room {
+export default class PokerRoom {
   private _waitingPlayers: Player[] = [];
   public players: Player[] = [];
   public game: Poker;

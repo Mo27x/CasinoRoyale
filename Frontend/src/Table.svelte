@@ -12,9 +12,6 @@
     }, 15000);
     return "";
   };
-
-  if (game.winners) {
-  }
 </script>
 
 <div class="table">

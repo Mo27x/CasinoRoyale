@@ -17,6 +17,7 @@
   import ChangeUsername from "./ChangeUsername.svelte";
   import ChangePassword from "./ChangePassword.svelte";
   import NotFound from "./NotFound.svelte";
+  import Blackjack from "./Blackjack.svelte";
 
   const socket = io();
   // const navigate = useNavigate();
@@ -140,6 +141,7 @@
         <Route path="account" component={Account} {socket} />
         <Route path="settings/*" component={Settings} {socket} />
         <Route path="poker" component={Poker} {socket} />
+        <Route path="blackjack" component={Blackjack} {socket} />
         <Route component={NotFound} {socket} />
         <Route
           path="settings/changeUsername"
@@ -157,7 +159,7 @@
 </div>
 
 <style>
-  @media screen and (max-width: 660px) {
+  /* @media screen and (max-width: 660px) { */
     .container {
       display: grid;
       grid-template-columns: 1fr;
@@ -236,5 +238,5 @@
       border-radius: 50%;
       padding: 0.05rem;
     }
-  }
+  /* } */
 </style>

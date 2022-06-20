@@ -17,6 +17,7 @@ export default class Poker {
   private canCheck!: boolean;
 
   public constructor(private bigBlind: number, public players: Player[]) {
+    this.resetPlayers();
     this.cards = [];
     this.smallBlind = this.bigBlind / 2;
     this.rounds = 0;
@@ -47,7 +48,6 @@ export default class Poker {
     this.canCheck = false;
     this.updatePlayers();
     this.actualBet = bigBlind;
-    this.resetPlayers();
   }
 
   check = (player: Player): boolean => {
@@ -214,6 +214,7 @@ export default class Poker {
       this.winners[i] = this.compareHands(this.pots[i]);
     }
     this.isGameEnded = true;
+    this.currentPlayer = null;
   };
 
   resetPlayers = () => {

@@ -4,7 +4,7 @@
   let user: any;
   export let socket: any;
   let gameMoney: number;
-  let moneyToBet: number = 0;
+  let moneyToBet = 0;
   let game: any;
   let isPlaying: boolean;
   let personalCards: any;

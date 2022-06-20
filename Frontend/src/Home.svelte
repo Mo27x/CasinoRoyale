@@ -1,7 +1,11 @@
 <script lang="ts">
   import { Router, Link, Route } from "svelte-navigator";
-  import { pokerGameMoney, isPlayingValue, userData } from "./store";
-  import Poker from "./Poker.svelte";
+  import {
+    pokerGameMoney,
+    blackjackGameMoney,
+    isPlayingValue,
+    userData,
+  } from "./store";
   let isLoggingIn = true;
   export let isLogged: boolean;
   export let socket: any;
@@ -22,8 +26,8 @@
   const changeMode = () => {
     isLoggingIn = !isLoggingIn;
   };
-  let pokerMoney = user ? Math.ceil(user.money / 2) : 0;
-  let blackjackMoney = user ? user.money / 2 : 0;
+  let pokerMoney = user ? Math.ceil(user.money / 10) : 0;
+  let blackjackMoney = user ? Math.ceil(user.money / 10) : 0;
   let tradeMoney = user ? user.money / 2 : 0;
 
   const login = async () => {
@@ -67,15 +71,22 @@
   pokerGameMoney.subscribe((value) => {
     pokerMoney = value;
   });
+  blackjackGameMoney.subscribe((value) => {
+    blackjackMoney = value;
+  });
   isPlayingValue.subscribe((value) => {
     isPlaying = value;
   });
   isPlayingValue.set(false);
   if (user) {
-    pokerGameMoney.set(Math.ceil(user.money / 2));
+    pokerGameMoney.set(Math.ceil(user.money / 10));
+    blackjackGameMoney.set(Math.ceil(user.money / 10));
   }
   const updatePokerMoney = () => {
     pokerGameMoney.set(pokerMoney);
+  };
+  const updateBlackjackMoney = () => {
+    blackjackGameMoney.set(blackjackMoney);
   };
   socket.emit("leaveRoom");
 </script>
@@ -225,14 +236,13 @@
                 <Link to="poker" class="link">Play</Link>
               </button>
             </div>
-            <Route path="poker" component={Poker} />
           </div>
         </div>
         <div class="game">
           <div class="name">Blackjack</div>
-          <!-- <div class="top-left-margin">How much you wanna play with?</div> -->
+          <div class="top-left-margin">How much you wanna play with?</div>
           <div class="center">
-            <!-- <div>
+            <div>
               <input
                 type="range"
                 name="money"
@@ -241,19 +251,21 @@
                 max={user.money}
                 step="100"
                 bind:value={blackjackMoney}
+                on:change={updateBlackjackMoney}
               />
             </div>
-            <div><output for="money" id="output">{blackjackMoney}</output></div> -->
-            Coming soon :)
+            <div><output for="money" id="output">{blackjackMoney}</output></div>
           </div>
-          <!-- <div class="container">
+          <div class="container">
             <div class="tutorial verticallyCenter">
               <button class="choice">Tutorial</button>
             </div>
             <div class="play verticallyCenter">
-              <button class="choice primary">Play</button>
+              <button class="choice primary">
+                <Link to="blackjack" class="link">Play</Link>
+              </button>
             </div>
-          </div> -->
+          </div>
         </div>
         <div class="game">
           <div class="name">Trade</div>
@@ -288,178 +300,178 @@
 {/if}
 
 <style>
-  @media screen and (max-width: 660px) {
-    :global(a) {
-      text-decoration: none;
-      color: #eeeeee;
-    }
-    .welcome {
-      font-size: 18pt;
-      text-align: center;
-    }
-
-    .verticalMargin {
-      margin: 0.5rem 0 0.5rem 0;
-    }
-
-    .cardsImg {
-      text-align: center;
-      margin: 0.5rem 0 0.5rem 0;
-    }
-
-    .logo {
-      height: 10rem;
-      width: 10rem;
-      border-radius: 50%;
-    }
-
-    .verticallyCenter {
-      display: grid;
-      place-items: center;
-    }
-
-    .insert {
-      margin: 0 0 0.5rem 0;
-    }
-
-    input[type="text"],
-    input[type="email"],
-    input[type="password"] {
-      width: 15rem;
-      height: 1.25rem;
-      background-color: #5a5867;
-      border-color: transparent;
-      border-radius: 0.5rem;
-      color: #eeeeee;
-      caret-color: #eeeeee;
-    }
-    input[type="text"]:focus,
-    input[type="email"]:focus,
-    input[type="password"]:focus {
-      background-color: #5a5867;
-      border-color: transparent;
-      color: #eeeeee;
-      caret-color: #eeeeee;
-    }
-    button.submit {
-      font-family: "Play";
-      font-size: 12pt;
-      width: 5rem;
-      height: 1.75rem;
-      background-color: #5a5867;
-      border-color: transparent;
-      color: #eeeeee;
-      border-radius: 0.5rem;
-      margin: 0 0 0.5rem 0;
-    }
-
-    input[type="range"] {
-      accent-color: #ffae82;
-      width: 90%;
-    }
-
-    .none {
-      background: none;
-      border: none;
-      text-decoration: none;
-      color: #eeeeee;
-    }
-
-    .option {
-      font-family: "Play";
-      font-size: 12pt;
-      background: none;
-      border: none;
-      text-decoration: underline;
-      color: #eeeeee;
-      padding: 0rem;
-      margin: 0rem;
-    }
-    .left {
-      text-align: left;
-    }
-    .right {
-      text-align: right;
-    }
-    .center {
-      text-align: center;
-    }
-
-    .daily_prize {
-      font-size: 12pt;
-      width: 7.5rem;
-      height: 1.75rem;
-      background-color: #5a5867;
-      border-color: transparent;
-      color: #eeeeee;
-      border-radius: 0.5rem;
-    }
-    .center-items {
-      display: grid;
-      place-items: center;
-    }
-    .space-between {
-      width: 90%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12pt;
-    }
-    .games {
-      display: grid;
-      place-items: center;
-    }
-    .game {
-      width: 90%;
-      height: 9.5rem;
-      background-color: #5a5867;
-      border-radius: 0.5rem;
-      margin: 1rem 0 0 0;
-    }
-
-    .name {
-      font-size: 14pt;
-      margin: 0.5rem 0 0 0;
-      text-align: center;
-    }
-
-    .top-left-margin {
-      margin: 0.5rem 0 0 0.5rem;
-    }
-
-    .choice {
-      font-size: 12pt;
-      width: 75%;
-      height: 2rem;
-      background-color: transparent;
-      border: 0.2rem solid #484656;
-      color: #eeeeee;
-      border-radius: 0.5rem;
-      text-decoration: none;
-    }
-
-    .primary {
-      background-color: #484656;
-    }
-    .container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr;
-      grid-auto-columns: 1fr;
-      gap: 0px 0px;
-      grid-auto-flow: row;
-      margin: 0.5rem 0 0 0;
-    }
-
-    .tutorial {
-      grid-area: 1 / 1 / 2 / 2;
-    }
-
-    .play {
-      grid-area: 1 / 2 / 2 / 3;
-    }
-    .sayHi {
-      font-size: 15pt;
-    }
+  /* @media screen and (max-width: 660px) { */
+  :global(a) {
+    text-decoration: none;
+    color: #eeeeee;
   }
+  .welcome {
+    font-size: 18pt;
+    text-align: center;
+  }
+
+  .verticalMargin {
+    margin: 0.5rem 0 0.5rem 0;
+  }
+
+  .cardsImg {
+    text-align: center;
+    margin: 0.5rem 0 0.5rem 0;
+  }
+
+  .logo {
+    height: 10rem;
+    width: 10rem;
+    border-radius: 50%;
+  }
+
+  .verticallyCenter {
+    display: grid;
+    place-items: center;
+  }
+
+  .insert {
+    margin: 0 0 0.5rem 0;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    width: 15rem;
+    height: 1.25rem;
+    background-color: #5a5867;
+    border-color: transparent;
+    border-radius: 0.5rem;
+    color: #eeeeee;
+    caret-color: #eeeeee;
+  }
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus {
+    background-color: #5a5867;
+    border-color: transparent;
+    color: #eeeeee;
+    caret-color: #eeeeee;
+  }
+  button.submit {
+    font-family: "Play";
+    font-size: 12pt;
+    width: 5rem;
+    height: 1.75rem;
+    background-color: #5a5867;
+    border-color: transparent;
+    color: #eeeeee;
+    border-radius: 0.5rem;
+    margin: 0 0 0.5rem 0;
+  }
+
+  input[type="range"] {
+    accent-color: #ffae82;
+    width: 90%;
+  }
+
+  .none {
+    background: none;
+    border: none;
+    text-decoration: none;
+    color: #eeeeee;
+  }
+
+  .option {
+    font-family: "Play";
+    font-size: 12pt;
+    background: none;
+    border: none;
+    text-decoration: underline;
+    color: #eeeeee;
+    padding: 0rem;
+    margin: 0rem;
+  }
+  .left {
+    text-align: left;
+  }
+  .right {
+    text-align: right;
+  }
+  .center {
+    text-align: center;
+  }
+
+  .daily_prize {
+    font-size: 12pt;
+    width: 7.5rem;
+    height: 1.75rem;
+    background-color: #5a5867;
+    border-color: transparent;
+    color: #eeeeee;
+    border-radius: 0.5rem;
+  }
+  .center-items {
+    display: grid;
+    place-items: center;
+  }
+  .space-between {
+    width: 90%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12pt;
+  }
+  .games {
+    display: grid;
+    place-items: center;
+  }
+  .game {
+    width: 90%;
+    height: 9.5rem;
+    background-color: #5a5867;
+    border-radius: 0.5rem;
+    margin: 1rem 0 0 0;
+  }
+
+  .name {
+    font-size: 14pt;
+    margin: 0.5rem 0 0 0;
+    text-align: center;
+  }
+
+  .top-left-margin {
+    margin: 0.5rem 0 0 0.5rem;
+  }
+
+  .choice {
+    font-size: 12pt;
+    width: 75%;
+    height: 2rem;
+    background-color: transparent;
+    border: 0.2rem solid #484656;
+    color: #eeeeee;
+    border-radius: 0.5rem;
+    text-decoration: none;
+  }
+
+  .primary {
+    background-color: #484656;
+  }
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    grid-auto-columns: 1fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    margin: 0.5rem 0 0 0;
+  }
+
+  .tutorial {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+
+  .play {
+    grid-area: 1 / 2 / 2 / 3;
+  }
+  .sayHi {
+    font-size: 15pt;
+  }
+  /* } */
 </style>

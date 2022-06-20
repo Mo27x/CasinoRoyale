@@ -1,18 +1,19 @@
 import Hand from "./hand";
 
-export default class Player {
+export default class BlackjackPlayer {
   private _hands!: Hand[];
-  private _moneyToBet!: number;
+  private _money!: number;
   private _currentHand!: Hand;
   constructor(
     public readonly name: string,
-    public money: number,
+    public initialMoney: number,
     public readonly id: string,
-    public readonly roomId: string
+    public readonly roomId: string,
+    public readonly initialBet: number
   ) {
     this.hands = [new Hand()];
     this.currentHand = this.hands[0];
-    this.moneyToBet = money;
+    this.money = initialMoney;
   }
 
   public get hands(): Hand[] {
@@ -22,11 +23,11 @@ export default class Player {
     this._hands = value;
   }
 
-  public get moneyToBet(): number {
-    return this._moneyToBet;
+  public get money(): number {
+    return this._money;
   }
-  public set moneyToBet(value: number) {
-    this._moneyToBet = value;
+  public set money(value: number) {
+    this._money = value;
   }
 
   public get currentHand(): Hand {
@@ -37,8 +38,8 @@ export default class Player {
   }
 
   bet(amount: number, handIndex: number): boolean {
-    if (this._moneyToBet >= amount) {
-      this._moneyToBet -= amount;
+    if (this._money >= amount) {
+      this._money -= amount;
       this.hands[handIndex].bet = amount;
       return true;
     }
@@ -62,7 +63,13 @@ export default class Player {
       name: this.name,
       hands: this.hands.map((hand) => hand.simplify()),
       currentHand: this.currentHand.simplify(),
-      moneyToBet: this.moneyToBet,
+      money: this.money,
     };
+  };
+
+  reset = () => {
+    this.hands = [new Hand()];
+    this.currentHand = this.hands[0];
+    this.money = this.initialMoney;
   };
 }

@@ -14,8 +14,10 @@ import { body, validationResult, CustomValidator } from "express-validator";
 import Player from "./poker/player";
 import cookieParser from "cookie-parser";
 import { Token } from "./entity/Token";
-import Room from "./poker/room";
+import PokerRoom from "./poker/room";
 import { Friendship } from "./entity/Friendship";
+import BlackjackRoom from "./blackjack/room";
+import BlackjackPlayer from "./blackjack/player";
 export interface PlayerAuthInfoRequest extends Request {
   playerUsername: string;
 }
@@ -66,7 +68,9 @@ createConnection()
     let tokenRepository = connection.getRepository(Token);
     let friendshipRepository = connection.getRepository(Friendship);
     let players: Player[] = [];
-    let rooms: Room[] = [];
+    let BlackjackPlayers: BlackjackPlayer[] = [];
+    let pokerRooms: PokerRoom[] = [];
+    let blackjackRooms: BlackjackRoom[] = [];
 
     // setup express app here
     // ...
@@ -634,28 +638,28 @@ createConnection()
       console.log("a user connected");
       socket.on("disconnect", () => {
         console.log("a user disconnected");
-        let player = getPlayerById(socket.id);
+        let player = getPokerPlayerById(socket.id);
         if (player) {
-          let room = getRoomById(player.roomId);
+          let room = getPokerRoomById(player.roomId);
           if (room) {
             room.removePlayer(player);
             if (room.players.length == 0) {
-              deleteRoom(room);
+              deletePokerRoom(room);
             }
             players.splice(players.indexOf(player), 1);
           }
         }
       });
       socket.on("poker", async (userData, money) => {
-        let player = getPlayerById(socket.id);
+        let player = getPokerPlayerById(socket.id);
         if (!player) {
-          const roomId = getRoom();
+          const roomId = getPokerRoom();
           let player = new Player(userData.username, money, socket.id, roomId);
-          let room = getRoomById(roomId);
+          let room = getPokerRoomById(roomId);
           let user = await userRepository.findOne({
             username: userData.username,
           });
-          if (user.money > room.bigBlind) {
+          if (user.money >= money && user.money >= room.bigBlind) {
             socket.join(roomId);
             room.addWaitingPlayer(player);
             players = [...players, player];
@@ -665,22 +669,24 @@ createConnection()
             io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
             let roomUsers = await io.in(room.id).fetchSockets();
             roomUsers.forEach((user) => {
-              let player = getPlayerById(user.id);
+              let player = getPokerPlayerById(user.id);
               io.to(user.id).emit("player", player.simplify());
               io.to(user.id).emit("personalCards", player.getCards());
             });
           }
         } else {
-          let room = getRoomById(player.roomId);
+          let room = getPokerRoomById(player.roomId);
           if (room && room.isPlayerInGame(player) && !room.isGameEnded) {
             io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
+            io.to(socket.id).emit("player", player.simplify());
+            io.to(socket.id).emit("personalCards", player.getCards());
           }
         }
       });
       socket.on("leaveRoom", async () => {
-        let player = getPlayerById(socket.id);
+        let player = getPokerPlayerById(socket.id);
         if (player) {
-          let room = getRoomById(player.roomId);
+          let room = getPokerRoomById(player.roomId);
           if (room) {
             let user = await userRepository.findOne({
               username: player.username,
@@ -688,50 +694,50 @@ createConnection()
             user.money += room.removePlayer(player);
             players.splice(players.indexOf(player), 1);
             userRepository.save(user);
-            action(room);
+            pokerAction(room);
             if (room.getPlayersCanPlay().length == 0) {
-              deleteRoom(room);
+              deletePokerRoom(room);
             }
           }
         }
       });
 
       socket.on("check", async () => {
-        let player = getPlayerById(socket.id);
+        let player = getPokerPlayerById(socket.id);
         if (player) {
-          let room = getRoomById(player.roomId);
-          if (room) if (room.check(player)) action(room);
+          let room = getPokerRoomById(player.roomId);
+          if (room) if (room.check(player)) pokerAction(room);
         }
       });
 
       socket.on("call", async () => {
-        let player = getPlayerById(socket.id);
-        let room = getRoomById(player.roomId);
+        let player = getPokerPlayerById(socket.id);
+        let room = getPokerRoomById(player.roomId);
         if (room.call(player)) {
-          action(room);
+          pokerAction(room);
         }
       });
 
       socket.on("bet", async (amount: number) => {
-        let player = getPlayerById(socket.id);
-        let room = getRoomById(player.roomId);
+        let player = getPokerPlayerById(socket.id);
+        let room = getPokerRoomById(player.roomId);
         if (room.bet(player, amount)) {
-          action(room);
+          pokerAction(room);
         }
       });
 
       socket.on("raise", async (amount: number) => {
-        let player = getPlayerById(socket.id);
-        let room = getRoomById(player.roomId);
+        let player = getPokerPlayerById(socket.id);
+        let room = getPokerRoomById(player.roomId);
         if (room.raise(player, amount)) {
-          action(room);
+          pokerAction(room);
         }
       });
 
       socket.on("fold", async () => {
-        let player = getPlayerById(socket.id);
+        let player = getPokerPlayerById(socket.id);
         if (player) {
-          let room = getRoomById(player.roomId);
+          let room = getPokerRoomById(player.roomId);
           if (room) {
             if (room.fold(player)) {
               let user = await userRepository.findOne({
@@ -739,7 +745,116 @@ createConnection()
               });
               user.money += player.money;
               userRepository.save(user);
-              action(room);
+              pokerAction(room);
+            }
+          }
+        }
+      });
+      socket.on("blackjack", async (userData, money, initialBet) => {
+        let player = getBlackjackPlayerById(socket.id);
+        if (!player) {
+          const roomId = getBlackjackRoom();
+          let player = new BlackjackPlayer(
+            userData.username,
+            money,
+            socket.id,
+            roomId,
+            initialBet
+          );
+          let room = getBlackjackRoomById(roomId);
+          let user = await userRepository.findOne({
+            username: userData.username,
+          });
+          if (user.money >= money && user.money >= initialBet) {
+            socket.join(roomId);
+            room.addWaitingPlayer(player);
+            BlackjackPlayers = [...BlackjackPlayers, player];
+            if (room.getPlayerWithMoney().length >= 1 && !room.isGameStarted) {
+              room.startGame();
+              io.in(room.id).emit("blackjackGame", room.getSimplifiedGame());
+            }
+          }
+        } else {
+          let room = getBlackjackRoomById(player.roomId);
+          if (room && room.isPlayerInGame(player) && !room.isGameEnded) {
+            io.in(room.id).emit("blackjackGame", room.getSimplifiedGame());
+          }
+        }
+      });
+      socket.on("leaveBlackjack", async () => {
+        let player = getBlackjackPlayerById(socket.id);
+        if (player) {
+          let room = getBlackjackRoomById(player.roomId);
+          if (room) {
+            let user = await userRepository.findOne({
+              username: player.name,
+            });
+            user.money += room.removePlayer(player);
+            BlackjackPlayers.splice(BlackjackPlayers.indexOf(player), 1);
+            userRepository.save(user);
+            blackjackAction(room);
+            if (room.getPlayerWithMoney().length == 0) {
+              deleteBlackjackRoom(room);
+            }
+          }
+        }
+      });
+
+      socket.on("hit", async () => {
+        let player = getBlackjackPlayerById(socket.id);
+        if (player) {
+          let room = getBlackjackRoomById(player.roomId);
+          if (room) {
+            if (room.hit(player)) {
+              blackjackAction(room);
+            }
+          }
+        }
+      });
+
+      socket.on("stand", async () => {
+        let player = getBlackjackPlayerById(socket.id);
+        if (player) {
+          let room = getBlackjackRoomById(player.roomId);
+          if (room) {
+            if (room.stand(player)) {
+              blackjackAction(room);
+            }
+          }
+        }
+      });
+
+      socket.on("double down", async () => {
+        let player = getBlackjackPlayerById(socket.id);
+        if (player) {
+          let room = getBlackjackRoomById(player.roomId);
+          if (room) {
+            if (room.doubleDown(player)) {
+              blackjackAction(room);
+            }
+          }
+        }
+      });
+
+      socket.on("split", async () => {
+        let player = getBlackjackPlayerById(socket.id);
+        if (player) {
+          let room = getBlackjackRoomById(player.roomId);
+          if (room) {
+            if (room.split(player)) {
+              blackjackAction(room);
+            }
+          }
+        }
+      });
+
+      socket.on("insurance", async () => {
+        let player = getBlackjackPlayerById(socket.id);
+        if (player) {
+          let room = getBlackjackRoomById(player.roomId);
+          if (room) {
+            if (room.insurance(player)) {
+              blackjackAction(room);
             }
           }
         }
@@ -754,11 +869,11 @@ createConnection()
       console.log(`socket ${id} has joined room ${room}`);
     });
 
-    const action = async (room: Room) => {
+    const pokerAction = async (room: PokerRoom) => {
       io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
       let roomUsers = await io.in(room.id).fetchSockets();
       roomUsers.forEach((user) => {
-        let player = getPlayerById(user.id);
+        let player = getPokerPlayerById(user.id);
         if (player) {
           io.to(user.id).emit("player", player.simplify());
           io.to(user.id).emit("personalCards", player.getCards());
@@ -774,27 +889,42 @@ createConnection()
             user.money += player.money;
             userRepository.save(user);
           });
-          startGameAfterDelay(room);
+          startPokerGameAfterDelay(room);
         }
       }
     };
 
-    const startGameAfterDelay = (room: Room): void => {
-      setTimeout(async () => {
-        room.getPlayers().forEach(async (player) => {
-          let user = await userRepository.findOne({
-            username: player.username,
-          });
-          if (user.money > room.bigBlind) {
-            user.money -= player.money;
+    const blackjackAction = async (room: BlackjackRoom) => {
+      io.in(room.id).emit("blackjackGame", room.getSimplifiedGame());
+      let roomUsers = await io.in(room.id).fetchSockets();
+      roomUsers.forEach((user) => {
+        let player = getBlackjackPlayerById(user.id);
+        if (player) {
+          io.in(room.id).emit("blackjackGame", room.getSimplifiedGame());
+        }
+      });
+      if (room.game) {
+        if (room.isGameEnded) {
+          room.players.forEach(async (player) => {
+            let user = await userRepository.findOne({
+              username: player.name,
+            });
+            user.money -= player.initialMoney;
+            user.money += player.money;
             userRepository.save(user);
-          }
-        });
+          });
+          startBlackjackGameAfterDelay(room);
+        }
+      }
+    };
+
+    const startPokerGameAfterDelay = (room: PokerRoom): void => {
+      setTimeout(async () => {
         room.startGame();
         io.in(room.id).emit("pokerGame", room.getSimplifiedGame());
         let roomUsers = await io.in(room.id).fetchSockets();
         roomUsers.forEach((user) => {
-          let player = getPlayerById(user.id);
+          let player = getPokerPlayerById(user.id);
           if (player) {
             io.to(user.id).emit("player", player.simplify());
             io.to(user.id).emit("personalCards", player.getCards());
@@ -803,7 +933,20 @@ createConnection()
       }, 30000);
     };
 
-    const getPlayerById = (id: string) => {
+    const startBlackjackGameAfterDelay = (room: BlackjackRoom): void => {
+      setTimeout(async () => {
+        room.startGame();
+        io.in(room.id).emit("blackjackGame", room.getSimplifiedGame());
+        let roomUsers = await io.in(room.id).fetchSockets();
+        roomUsers.forEach((user) => {
+          let player = getBlackjackPlayerById(user.id);
+          if (player) {
+          }
+        });
+      }, 10000);
+    };
+
+    const getPokerPlayerById = (id: string) => {
       for (let i = 0; i < players.length; i++) {
         if (players[i].id === id) {
           return players[i];
@@ -811,39 +954,86 @@ createConnection()
       }
     };
 
-    const createRoom = (): string => {
+    const getBlackjackPlayerById = (id: string) => {
+      for (let i = 0; i < BlackjackPlayers.length; i++) {
+        if (BlackjackPlayers[i].id === id) {
+          return BlackjackPlayers[i];
+        }
+      }
+    };
+
+    const createPokerRoom = (): string => {
       const str = Buffer.from(Math.random().toString())
         .toString("base64")
         .substring(0, 7);
-      rooms = [...rooms, new Room(str)];
+      pokerRooms = [...pokerRooms, new PokerRoom(str)];
       return str;
     };
 
-    const deleteRoom = (room: Room) => {
-      for (let i = 0; i < rooms.length; i++) {
-        if (rooms[i] === room) {
-          rooms.splice(i, 1);
+    const createBlackjackRoom = (): string => {
+      const str = Buffer.from(Math.random().toString())
+        .toString("base64")
+        .substring(0, 7);
+      blackjackRooms = [...blackjackRooms, new BlackjackRoom(str)];
+      return str;
+    };
+
+    const deletePokerRoom = (room: PokerRoom) => {
+      for (let i = 0; i < pokerRooms.length; i++) {
+        if (pokerRooms[i] === room) {
+          pokerRooms.splice(i, 1);
         }
       }
     };
 
-    const getRoom = (): string => {
+    const deleteBlackjackRoom = (room: BlackjackRoom) => {
+      blackjackRooms.forEach((blackjackRoom) => {
+        if (blackjackRoom.id === room.id) {
+          blackjackRooms = blackjackRooms.filter(
+            (blackjackR) => blackjackR !== room
+          );
+        }
+      });
+    };
+
+    const getPokerRoom = (): string => {
       let availableRooms: string[] = [];
-      for (let i = 0; i < rooms.length; i++) {
-        if (rooms[i].players.length < 6) {
-          availableRooms = [...availableRooms, rooms[i].id];
+      for (let i = 0; i < pokerRooms.length; i++) {
+        if (pokerRooms[i].players.length < 6) {
+          availableRooms = [...availableRooms, pokerRooms[i].id];
         }
       }
       if (availableRooms.length < 1) {
-        return createRoom();
+        return createPokerRoom();
       }
       return availableRooms[0];
     };
 
-    const getRoomById = (id: string): Room => {
-      for (let i = 0; i < rooms.length; i++) {
-        if (rooms[i].id === id) {
-          return rooms[i];
+    const getBlackjackRoom = (): string => {
+      let availableRooms: string[] = [];
+      for (let i = 0; i < blackjackRooms.length; i++) {
+        if (blackjackRooms[i].players.length < 2) {
+          availableRooms = [...availableRooms, blackjackRooms[i].id];
+        }
+      }
+      if (availableRooms.length < 1) {
+        return createBlackjackRoom();
+      }
+      return availableRooms[0];
+    };
+
+    const getPokerRoomById = (id: string): PokerRoom => {
+      for (let i = 0; i < pokerRooms.length; i++) {
+        if (pokerRooms[i].id === id) {
+          return pokerRooms[i];
+        }
+      }
+    };
+
+    const getBlackjackRoomById = (id: string): BlackjackRoom => {
+      for (let i = 0; i < blackjackRooms.length; i++) {
+        if (blackjackRooms[i].id === id) {
+          return blackjackRooms[i];
         }
       }
     };

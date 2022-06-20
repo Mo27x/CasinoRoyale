@@ -2,12 +2,20 @@ import Card from "./card";
 
 export default class Hand {
   private _cards!: Card[];
+  private _actions!: string[];
   private _bet!: number;
   private _hasStood: boolean = false;
   private _hasSurrendered: boolean = false;
   private _insurance: number = 0;
   private _hasWon: boolean = false;
   private _isPush: boolean = false;
+  private _canInsure: boolean = false;
+  public get canInsure(): boolean {
+    return this._canInsure;
+  }
+  public set canInsure(value: boolean) {
+    this._canInsure = value;
+  }
 
   constructor() {
     this.cards = [];
@@ -95,12 +103,65 @@ export default class Hand {
     return this.value > 21;
   }
 
+  canSplit = (): boolean => {
+    return (
+      this.cards.length === 2 &&
+      this.firstCard.rank.value === this.cards[1].rank.value &&
+      !this.hasStood &&
+      !this.isBlackjack
+    );
+  };
+  canDoubleDown = (): boolean => {
+    return (
+      this.cards.length === 2 &&
+      !this.hasStood &&
+      !this.hasSurrendered &&
+      !this.isBlackjack
+    );
+  };
+  canSurrender = (): boolean => {
+    return (
+      this.cards.length === 2 &&
+      !this.hasStood &&
+      !this.hasSurrendered &&
+      !this.isBlackjack
+    );
+  };
+
+  canHit = (): boolean => {
+    return (
+      this.value < 21 &&
+      !this.hasStood &&
+      !this.hasSurrendered &&
+      !this.hasBusted &&
+      !this.isBlackjack
+    );
+  };
+
+  get actions(): string[] {
+    this._actions = [];
+    if (this._cards.length > 0 && !this.hasSurrendered && !this.hasStood) {
+      if (this.canHit()) this._actions = ["hit"];
+      this._actions = [...this._actions, "stand"];
+      if (this.canSplit()) this._actions = [...this._actions, "split"];
+      if (this.canDoubleDown())
+        this._actions = [...this._actions, "double down"];
+      if (this.canSurrender()) this._actions = [...this._actions, "surrender"];
+      if (this.canInsure && this.cards.length === 2) {
+        this._actions = [...this._actions, "insurance"];
+      }
+    }
+    return this._actions;
+  }
+
   simplify = () => {
     return {
       bet: this._bet,
       cards: this._cards,
       hasWon: this._hasWon,
       isBlackjack: this.isBlackjack,
+      actions: this.actions,
+      value: this.value,
     };
   };
 }
