@@ -1,11 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToMany,
-  ManyToMany,
-  JoinTable,
-} from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 import { Friendship } from "./Friendship";
 import { Token } from "./Token";
 
@@ -31,6 +24,18 @@ export class User {
 
   @Column({ nullable: true })
   lastAccess: Date;
+
+  @Column({ nullable: true })
+  pokerGamesWon: number;
+
+  @Column({ nullable: true })
+  pokerGamesPlayed: number;
+
+  @Column({ nullable: true })
+  blackjackGamesWon: number;
+
+  @Column({ nullable: true })
+  blackjackGamesPlayed: number;
 
   @OneToMany(() => Friendship, (Friendship) => Friendship.asker)
   requests: Friendship[];

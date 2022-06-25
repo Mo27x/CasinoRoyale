@@ -60,9 +60,6 @@
     align-self: center;
     height: 2rem;
     width: 98%;
-    overflow-x: scroll;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
   }
   .delete {
     grid-area: 1 / 2 / 2 / 3;

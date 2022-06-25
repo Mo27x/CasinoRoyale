@@ -340,6 +340,10 @@ createConnection()
               email: user.email,
               money: user.money,
               streak: user.streak,
+              blackjackGamesWon: user.blackjackGamesWon,
+              blackjackGamesPlayed: user.blackjackGamesPlayed,
+              pokerGamesWon: user.pokerGamesWon,
+              pokerGamesPlayed: user.pokerGamesPlayed,
               friends: [...friendshipsAnsweredMap, ...friendshipsAskedMap],
               requests: requestsMap,
               responses: responsesMap,
@@ -620,6 +624,10 @@ createConnection()
             user.streak = 1;
             user.requests = [];
             user.responses = [];
+            user.pokerGamesWon = 0;
+            user.pokerGamesPlayed = 0;
+            user.blackjackGamesWon = 0;
+            user.blackjackGamesPlayed = 0;
             userRepository.save(user);
           } else {
             return res.status(404);
@@ -892,12 +900,14 @@ createConnection()
       });
       if (room.game) {
         if (room.isGameEnded()) {
-          room.getPlayers().forEach(async (player) => {
+          room.players.forEach(async (player) => {
             let user = await userRepository.findOne({
               username: player.username,
             });
             user.money -= player.initialMoney;
             user.money += player.money;
+            user.pokerGamesPlayed++;
+            if (player.hasWon) user.pokerGamesWon++;
             userRepository.save(user);
           });
           startPokerGameAfterDelay(room);
@@ -922,6 +932,10 @@ createConnection()
             });
             user.money -= player.initialMoney;
             user.money += player.money;
+            player.hands.forEach((hand) => {
+              user.blackjackGamesPlayed++;
+              if (hand.hasWon) user.blackjackGamesWon++;
+            });
             userRepository.save(user);
           });
           startBlackjackGameAfterDelay(room);

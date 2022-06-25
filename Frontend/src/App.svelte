@@ -87,14 +87,14 @@
           <div class="center money">{user.money}</div>
         {/if}
         <div class="left" on:click={() => change("home")}>
-          <Link to="/">
+          <div class="inner">
             <img src="./icons/casinoroyale.jpg" alt="Logo" class="icon round" />
-          </Link>
+            <div class="text"><div class="title">CASINO ROYALE</div></div>
+          </div>
         </div>
         <div class="right">
           {#if isPlaying}
             <Link to="/">
-              <!-- <div on:click={() => navigate(-1)} /> -->
               <div on:click={() => change("home")}>
                 <img src="./icons/back.svg" alt="Go Back" class="icon" />
               </div>
@@ -107,28 +107,59 @@
   {#if isLogged}
     <div class="menu">
       <Router primary={false} history={html5History}>
-        <div id="home" class="nav-item active" on:click={() => change("home")}>
+        <div
+          id="home"
+          class="nav-item home active"
+          on:click={() => change("home")}
+        >
           <Link to="/">
-            <img src="./icons/home.svg" alt="" class="icon" />
+            <div class="inner">
+              <img src="./icons/home.svg" alt="" class="icon" />
+              <div class="text"><div class="name">HOME</div></div>
+            </div>
           </Link>
         </div>
-        <div id="friends" class="nav-item " on:click={() => change("friends")}>
+        <div
+          id="friends"
+          class="nav-item friends"
+          on:click={() => change("friends")}
+        >
           <Link to="/friends">
-            <img src="./icons/friends.svg" alt="" class="icon" />
+            <div class="inner">
+              <img src="./icons/friends.svg" alt="" class="icon" />
+              <div class="text"><div class="name">FRIENDS</div></div>
+            </div>
           </Link>
         </div>
-        <div id="account" class="nav-item" on:click={() => change("account")}>
-          <Link to="/account">
-            <img src="./icons/account.svg" alt="" class="icon" />
+        <div
+          id="account"
+          class="nav-item account"
+          on:click={() => change("account")}
+        >
+          <Link to="/account" class="inner">
+            <div class="inner">
+              <img src="./icons/account.svg" alt="" class="icon" />
+              <div class="text"><div class="name">ACCOUNT</div></div>
+            </div>
           </Link>
         </div>
-        <div id="settings" class="nav-item" on:click={() => change("settings")}>
+        <div
+          id="settings"
+          class="nav-item settings"
+          on:click={() => change("settings")}
+        >
           <Link to="/settings">
-            <img src="./icons/settings.svg" alt="" class="icon" />
+            <div class="inner">
+              <img src="./icons/settings.svg" alt="" class="icon" />
+              <div class="text"><div class="name">SETTINGS</div></div>
+            </div>
           </Link>
         </div>
-        <div id="logout" class="nav-item" on:click={() => logout()}>
-          <img src="./icons/logout.svg" alt="" class="icon" />
+        <div id="logout" class="nav-item logout" on:click={() => logout()}>
+          <div class="inner">
+            <img src="./icons/logout.svg" alt="" class="icon" />
+            <div class="text"><div class="name">LOGOUT</div></div>
+          </div>
         </div>
       </Router>
     </div>
@@ -159,84 +190,148 @@
 </div>
 
 <style>
-  /* @media screen and (max-width: 660px) { */
-    .container {
-      display: grid;
-      grid-template-columns: 1fr;
-      grid-template-rows: min-content 1fr min-content;
-      gap: 0rem 0rem;
-      grid-auto-flow: row;
-      width: 100%;
-      height: 100%;
-    }
+  .title {
+    text-align: center;
+    font-size: 20pt;
+    color: #e6e3f8;
+  }
+  .money {
+    text-align: center;
+    font-size: 16pt;
+  }
 
-    .header {
-      display: grid;
-      place-items: center;
-      grid-template-columns: min-content 1fr min-content;
-      grid-template-rows: 1fr;
-      gap: 0px 0px;
-      grid-auto-flow: row;
-      grid-area: 1 / 1 / 2 / 2;
-    }
+  .menu > .nav-item {
+    border-left: solid 0.4rem transparent;
+    transition: background-color 300ms, border-bottom-width 300ms;
+  }
 
-    .header > .left {
-      grid-area: 1 / 1 / 2 / 2;
-      display: grid;
-      place-items: center;
-    }
+  .nav-item > :global(a) {
+    text-decoration: none;
+    width: 100%;
+    height: 100%;
+  }
 
-    .header > .center {
-      grid-area: 1 / 1 / 2 / 4;
-    }
+  .menu > .nav-item.active {
+    border-left-color: #ffae82;
+  }
+  .icon {
+    width: 3rem;
+    height: 3rem;
+    margin-left: 1rem;
+  }
+  .round {
+    border-radius: 50%;
+    padding: 0.05rem;
+  }
+  .container {
+    display: grid;
+    grid-template-columns: 20% 1fr;
+    grid-template-rows: 4rem 1fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    height: 100%;
+    width: 100%;
+  }
 
-    .header > .right {
-      grid-area: 1 / 3 / 2 / 4;
-    }
+  .main {
+    grid-area: 2 / 2 / 3 / 3;
+  }
+  .menu {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    grid-area: 2 / 1 / 3 / 2;
+    background-color: #5a5867;
+    height: 100%;
+    width: 100%;
+  }
 
-    .title {
-      text-align: center;
-      font-size: 20pt;
-    }
-    .money {
-      text-align: center;
-      font-size: 16pt;
-    }
+  .home {
+    grid-area: 1 / 1 / 2 / 2;
+    display: flex;
+    align-items: center;
+  }
 
-    .menu {
-      width: 100%;
-      height: fit-content;
-      background-color: #c8bfff;
-      display: flex;
-      grid-area: 3/1/4/2;
-    }
+  .friends {
+    grid-area: 2 / 1 / 3 / 2;
+    display: flex;
+    align-items: center;
+  }
 
-    .menu > .nav-item {
-      flex: 1;
-      display: grid;
-      place-items: center;
-      border-bottom: solid 0rem #5a5867;
-      transition: background-color 300ms, border-bottom-width 300ms;
-    }
+  .account {
+    grid-area: 3 / 1 / 4 / 2;
+    display: flex;
+    align-items: center;
+  }
 
-    .nav-item > :global(a) {
-      text-decoration: none;
-    }
+  .settings {
+    grid-area: 4 / 1 / 5 / 2;
+    display: flex;
+    align-items: center;
+  }
 
-    .menu > .nav-item.active {
-      border-bottom-width: 0.4rem;
-    }
-    .icon {
-      width: 2.5rem;
-      height: 2.5rem;
-    }
-    .main {
-      grid-area: 2 / 1 / 3 / 2;
-      margin: 0.05rem 0 0.25rem 0;
-    }
-    .round {
-      border-radius: 50%;
-      padding: 0.05rem;
-    }
-  /* } */
+  .logout {
+    grid-area: 7 / 1 / 8 / 2;
+    display: flex;
+    align-items: center;
+  }
+
+  .inner {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+  }
+
+  .inner > img {
+    width: 3rem;
+    height: 3rem;
+    grid-area: 1 / 1 / 2 / 2;
+  }
+  .inner > .text {
+    grid-area: 1 / 2 / 2 / 3;
+    font-size: 14pt;
+    font-weight: bold;
+    color: #eee;
+  }
+
+  .inner > .text:hover {
+    color: #fff;
+  }
+  .inner > .text > .name {
+    margin-left: 1rem;
+  }
+
+  .header {
+    display: grid;
+    grid-template-columns: 20% 1fr min-content;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    grid-area: 1 / 1 / 2 / 3;
+    place-items: center;
+    font-size: 18pt;
+  }
+
+  .header > .left {
+    display: flex;
+    align-items: center;
+    grid-area: 1 / 1 / 2 / 2;
+    height: 100%;
+    width: 100%;
+    background-color: #5a5867;
+  }
+
+  .header > .center {
+    grid-area: 1 / 2 / 2 / 3;
+  }
+  .header > .right {
+    grid-area: 1/3/2/4;
+  }
 </style>

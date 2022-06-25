@@ -58,13 +58,13 @@
       <div class="box">
         <div class="info">
           <div class="field">WINS</div>
-          <div class="value">10</div>
+          <div class="value">{user.pokerGamesWon}</div>
         </div>
       </div>
       <div class="box">
         <div class="info">
           <div class="field">GAMES</div>
-          <div class="value">18</div>
+          <div class="value">{user.pokerGamesPlayed}</div>
         </div>
       </div>
     </div>
@@ -75,13 +75,13 @@
       <div class="box">
         <div class="info">
           <div class="field">WINS</div>
-          <div class="value">4</div>
+          <div class="value">{user.blackjackGamesWon}</div>
         </div>
       </div>
       <div class="box">
         <div class="info">
           <div class="field">GAMES</div>
-          <div class="value">20</div>
+          <div class="value">{user.blackjackGamesPlayed}</div>
         </div>
       </div>
     </div>
@@ -90,52 +90,52 @@
 
 <style>
   /* @media only screen and (max-width: 600px) { */
-    .history {
-      font-size: 20pt;
-    }
-    .center {
-      text-align: center;
-    }
-    .box {
-      display: grid;
-      place-items: center;
-    }
-    .section {
-      display: grid;
-      width: 90%;
-      margin: 1rem 0 0 0;
-    }
-    .title {
-      font-size: 14pt;
-      border-radius: 0.5rem;
-    }
-    .info {
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      grid-template-rows: 1fr;
-      gap: 0px 0px;
-      grid-auto-flow: row;
-      width: 90%;
-      height: 1.6rem;
-      margin: 0.5rem 0 0 0;
-    }
-    .value {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      grid-area: 1 / 2 / 2 / 3;
-      background-color: #5a5867;
-      border-radius: 0.5rem;
-    }
-    .field {
-      grid-area: 1 / 1 / 2 / 2;
-    }
-    .fit {
-      height: min-content;
-    }
-    hr {
-      margin: 0;
-      padding: 0;
-    }
+  .history {
+    font-size: 20pt;
+  }
+  .center {
+    text-align: center;
+  }
+  .box {
+    display: grid;
+    place-items: center;
+  }
+  .section {
+    display: grid;
+    width: 90%;
+    margin: 1rem 0 0 0;
+  }
+  .title {
+    font-size: 14pt;
+    border-radius: 0.5rem;
+  }
+  .info {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    width: 90%;
+    height: 1.6rem;
+    margin: 0.5rem 0 0 0;
+  }
+  .value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-area: 1 / 2 / 2 / 3;
+    background-color: #5a5867;
+    border-radius: 0.5rem;
+  }
+  .field {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+  .fit {
+    height: min-content;
+  }
+  hr {
+    margin: 0;
+    padding: 0;
+  }
   /* } */
 </style>

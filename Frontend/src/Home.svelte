@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Router, Link, Route, useParams } from "svelte-navigator";
+  import { Router, Link, link, useResolvable } from "svelte-navigator";
   import {
     pokerGameMoney,
     blackjackGameMoney,
@@ -38,8 +38,12 @@
   const changeMode = () => {
     isLoggingIn = !isLoggingIn;
   };
-  let pokerMoney = user ? Math.ceil(user.money / 10) : 0;
-  let blackjackMoney = user ? Math.ceil(user.money / 10) : 0;
+  let pokerMoney = user
+    ? Math.ceil(user.money / 10) - (Math.ceil(user.money / 10) % 100)
+    : 0;
+  let blackjackMoney = user
+    ? Math.ceil(user.money / 10) - (Math.ceil(user.money / 10) % 100)
+    : 0;
 
   const login = async () => {
     let response = await fetch("/api/login", {
@@ -108,6 +112,8 @@
     }
   };
 
+  const blackjackLink = useResolvable("blackjack");
+
   const deleteError = (error: string) => {
     error = "";
   };
@@ -125,8 +131,12 @@
   });
   isPlayingValue.set(false);
   if (user) {
-    pokerGameMoney.set(Math.ceil(user.money / 10));
-    blackjackGameMoney.set(Math.ceil(user.money / 10));
+    pokerGameMoney.set(
+      Math.ceil(user.money / 10) - (Math.ceil(user.money / 10) % 100)
+    );
+    blackjackGameMoney.set(
+      Math.ceil(user.money / 10) - (Math.ceil(user.money / 10) % 100)
+    );
   }
   const updatePokerMoney = () => {
     pokerGameMoney.set(pokerMoney);
@@ -138,127 +148,143 @@
 </script>
 
 {#if !isLogged}
-  <div class="cardsImg">
-    <img src="./icons/casinoroyale.jpg" alt="Cards" class="logo" />
+  <div class="sign">
+    <div class="image">
+      <img src="./icons/cards.svg" alt="Cards" class="logo" />
+    </div>
+    <div class="form">
+      <div class="all-space">
+        <div class="all-width">
+          {#if !isLoggingIn}
+            <div class="welcome">WELCOME!</div>
+            <div class="verticalMargin">Create your account</div>
+            <div class="insert">
+              <label for="username">Username</label>
+              <div>
+                <input
+                  type="text"
+                  name="username"
+                  id="username"
+                  pattern="[^\s]+"
+                  required
+                  bind:value={signUpData.username}
+                  on:input={() => deleteError(signUpErrors.username)}
+                />
+              </div>
+              <div class="error" id="username-error">
+                {signUpErrors.username}
+              </div>
+            </div>
+            <div class="insert">
+              <label for="email">Email</label>
+              <div>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  required
+                  bind:value={signUpData.email}
+                  on:input={() => deleteError(signUpErrors.email)}
+                />
+              </div>
+              <div class="error" id="email-error">{signUpErrors.email}</div>
+            </div>
+            <div class="insert">
+              <label for="password">Password</label>
+              <div>
+                <input
+                  type="password"
+                  name="password"
+                  id="password"
+                  required
+                  bind:value={signUpData.password}
+                  on:input={() => deleteError(signUpErrors.password)}
+                />
+              </div>
+              <div class="error" id="password-error">
+                {signUpErrors.password}
+              </div>
+            </div>
+            <div class="insert">
+              <label for="passwordConfirm">Confirm Password</label>
+              <div>
+                <input
+                  type="password"
+                  name="passwordConfirm"
+                  id="passwordConfirm"
+                  required
+                  bind:value={signUpData.passwordConfirm}
+                  on:input={() => deleteError(signUpErrors.passwordConfirm)}
+                />
+              </div>
+              <div class="error" id="passwordConfirm-errors">
+                {signUpErrors.passwordConfirm}
+              </div>
+            </div>
+            <div class="right">
+              <button class="submit" on:click={() => signUp()}>Create</button>
+            </div>
+            <div>
+              Already have an account? <button
+                class="option"
+                on:click={changeMode}>Login</button
+              >
+            </div>
+          {:else}
+            <div class="welcome">WELCOME BACK!</div>
+            <div class="verticalMargin">Login to your account</div>
+            <div>
+              <div class="insert">
+                <label for="email">Email</label>
+                <div>
+                  <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    required
+                    bind:value={loginData.email}
+                    on:input={() => deleteError(loginErrors.email)}
+                  />
+                </div>
+                <div class="error" id="email-error">{loginErrors.email}</div>
+              </div>
+              <div class="insert">
+                <label for="passwd">Password</label>
+                <div>
+                  <input
+                    type="password"
+                    name="passwd"
+                    id="passwd"
+                    required
+                    bind:value={loginData.password}
+                    on:input={() => deleteError(loginErrors.password)}
+                  />
+                </div>
+                <div class="error" id="password-error">
+                  {loginErrors.password}
+                </div>
+              </div>
+              <!-- <div><a href="#" class="none">Forgot password?</a></div> -->
+              <div class="insert">
+                <div class="send">
+                  <div class="right">
+                    <button class="submit" on:click={() => login()}
+                      >Login</button
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              New here? <button class="option" on:click={changeMode}
+                >Sign Up</button
+              > and start playing
+            </div>
+          {/if}
+        </div>
+      </div>
+    </div>
   </div>
-  {#if !isLoggingIn}
-    <div class="welcome">WELCOME!</div>
-    <div class="verticallyCenter">
-      <div class="verticalMargin">Create your account</div>
-      <div>
-        <div class="insert">
-          <label for="username">Username</label>
-          <div>
-            <input
-              type="text"
-              name="username"
-              id="username"
-              pattern="[^\s]+"
-              required
-              bind:value={signUpData.username}
-              on:input={() => deleteError(signUpErrors.username)}
-            />
-          </div>
-          <div class="error" id="username-error">{signUpErrors.username}</div>
-        </div>
-        <div class="insert">
-          <label for="email">Email</label>
-          <div>
-            <input
-              type="email"
-              name="email"
-              id="email"
-              required
-              bind:value={signUpData.email}
-              on:input={() => deleteError(signUpErrors.email)}
-            />
-          </div>
-          <div class="error" id="email-error">{signUpErrors.email}</div>
-        </div>
-        <div class="insert">
-          <label for="password">Password</label>
-          <div>
-            <input
-              type="password"
-              name="password"
-              id="password"
-              required
-              bind:value={signUpData.password}
-              on:input={() => deleteError(signUpErrors.password)}
-            />
-          </div>
-          <div class="error" id="password-error">{signUpErrors.password}</div>
-        </div>
-        <div class="insert">
-          <label for="passwordConfirm">Confirm Password</label>
-          <div>
-            <input
-              type="password"
-              name="passwordConfirm"
-              id="passwordConfirm"
-              required
-              bind:value={signUpData.passwordConfirm}
-              on:input={() => deleteError(signUpErrors.passwordConfirm)}
-            />
-          </div>
-          <div class="error" id="passwordConfirm-errors">
-            {signUpErrors.passwordConfirm}
-          </div>
-        </div>
-        <div class="right">
-          <button class="submit" on:click={() => signUp()}>Create</button>
-        </div>
-      </div>
-      <div>
-        Already have an account? <button class="option" on:click={changeMode}
-          >Login</button
-        >
-      </div>
-    </div>
-  {:else}
-    <div class="welcome">WELCOME BACK!</div>
-    <div class="verticallyCenter">
-      <div class="verticalMargin">Login to your account</div>
-      <div>
-        <div class="insert">
-          <label for="email">Email</label>
-          <div>
-            <input
-              type="email"
-              name="email"
-              id="email"
-              required
-              bind:value={loginData.email}
-              on:input={() => deleteError(loginErrors.email)}
-            />
-          </div>
-          <div class="error" id="email-error">{loginErrors.email}</div>
-        </div>
-        <div class="insert">
-          <label for="passwd">Password</label>
-          <div>
-            <input
-              type="password"
-              name="passwd"
-              id="passwd"
-              required
-              bind:value={loginData.password}
-              on:input={() => deleteError(loginErrors.password)}
-            />
-          </div>
-          <div class="error" id="password-error">{loginErrors.password}</div>
-        </div>
-        <div><a href="#" class="none">Forgot password?</a></div>
-        <div class="right">
-          <button class="submit" on:click={() => login()}>Login</button>
-        </div>
-      </div>
-      <div>
-        New here? <button class="option" on:click={changeMode}>Sign Up</button> and
-        start playing
-      </div>
-    </div>
-  {/if}
 {:else}
   <Router>
     <div>
@@ -291,12 +317,22 @@
           </div>
           <div class="container">
             <div class="tutorial verticallyCenter">
-              <button class="choice">Tutorial</button>
+              <a
+                href="https://www.youtube.com/watch?v=pSRGErzzIo4"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="choice verticallyCenter"
+              >
+                Tutorial
+              </a>
             </div>
             <div class="play verticallyCenter">
-              <button class="choice primary">
+              <Link to="poker" class="link">
+                <button class="choice primary">Play</button>
+              </Link>
+              <!-- <button class="choice primary">
                 <Link to="poker" class="link">Play</Link>
-              </button>
+              </button> -->
             </div>
           </div>
         </div>
@@ -322,13 +358,22 @@
           </div>
           <div class="container">
             <div class="tutorial verticallyCenter">
-              <button class="choice">Tutorial</button>
+              <a
+                href="https://www.youtube.com/watch?v=PljDuynF-j0"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="choice verticallyCenter"
+              >
+                Tutorial
+              </a>
             </div>
-            <div class="play verticallyCenter">
-              <button class="choice primary">
-                <Link to="blackjack" class="link">Play</Link>
-              </button>
-            </div>
+            <Router>
+              <div class="play verticallyCenter">
+                <button class="choice primary">
+                  <Link to="blackjack" class="link">Play</Link>
+                </button>
+              </div>
+            </Router>
           </div>
         </div>
       </div>
@@ -337,14 +382,50 @@
 {/if}
 
 <style>
-  /* @media screen and (max-width: 660px) { */
+  .sign {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    gap: 0px 0px;
+    grid-auto-flow: row;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+  }
+
+  .form {
+    display: grid;
+    place-items: center;
+    grid-area: 1 / 1 / 2 / 2;
+    width: 100%;
+    height: 100%;
+  }
+
+  .image {
+    display: grid;
+    place-items: center;
+    grid-area: 1 / 2 / 2 / 3;
+    width: 100%;
+    height: 100%;
+  }
+
+  .all-space {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .all-width {
+    width: 100%;
+  }
+
   :global(a) {
     text-decoration: none;
-    all: none;
+    width: 100%;
+    height: 100%;
     color: #eeeeee;
   }
   .welcome {
-    font-size: 18pt;
+    font-size: 20pt;
     text-align: center;
   }
 
@@ -352,15 +433,9 @@
     margin: 0.5rem 0 0.5rem 0;
   }
 
-  .cardsImg {
-    text-align: center;
-    margin: 0.5rem 0 0.5rem 0;
-  }
-
   .logo {
-    height: 10rem;
-    width: 10rem;
-    border-radius: 50%;
+    width: 90%;
+    height: auto;
   }
 
   .verticallyCenter {
@@ -369,19 +444,24 @@
   }
 
   .insert {
+    width: 100%;
     margin: 0 0 0.5rem 0;
   }
 
+  label {
+    font-size: 16pt;
+  }
   input[type="text"],
   input[type="email"],
   input[type="password"] {
-    width: 15rem;
-    height: 1.25rem;
+    width: 70%;
+    height: 1.75rem;
     background-color: #5a5867;
     border-color: transparent;
     border-radius: 0.5rem;
     color: #eeeeee;
     caret-color: #eeeeee;
+    font-size: 16pt;
   }
   input[type="text"]:focus,
   input[type="email"]:focus,
@@ -399,14 +479,18 @@
   }
   button.submit {
     font-family: "Play";
-    font-size: 12pt;
-    width: 5rem;
-    height: 1.75rem;
+    font-size: 16pt;
+    width: 30%;
+    height: 2rem;
     background-color: #5a5867;
     border-color: transparent;
     color: #eeeeee;
     border-radius: 0.5rem;
-    margin: 0 0 0.5rem 0;
+  }
+
+  .send {
+    text-align: center;
+    width: 70%;
   }
 
   input[type="range"] {
@@ -414,16 +498,9 @@
     width: 90%;
   }
 
-  .none {
-    background: none;
-    border: none;
-    text-decoration: none;
-    color: #eeeeee;
-  }
-
   .option {
     font-family: "Play";
-    font-size: 12pt;
+    font-size: 14pt;
     background: none;
     border: none;
     text-decoration: underline;
@@ -442,8 +519,8 @@
   }
 
   .streak {
-    font-size: 12pt;
-    width: 7.5rem;
+    font-size: 14pt;
+    width: 8.5rem;
     height: 1.75rem;
     border-color: transparent;
     color: #eeeeee;
@@ -458,7 +535,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12pt;
+    font-size: 14pt;
   }
   .games {
     display: grid;
@@ -473,17 +550,13 @@
   }
 
   .name {
-    font-size: 14pt;
+    font-size: 16pt;
     margin: 0.5rem 0 0 0;
     text-align: center;
   }
 
-  .top-left-margin {
-    margin: 0.5rem 0 0 0.5rem;
-  }
-
   .choice {
-    font-size: 12pt;
+    font-size: 14pt;
     width: 75%;
     height: 2rem;
     background-color: transparent;
@@ -513,8 +586,12 @@
   .play {
     grid-area: 1 / 2 / 2 / 3;
   }
-  .sayHi {
-    font-size: 15pt;
+
+  .play > :global(a) {
+    display: grid;
+    place-items: center;
   }
-  /* } */
+  .sayHi {
+    font-size: 16pt;
+  }
 </style>
